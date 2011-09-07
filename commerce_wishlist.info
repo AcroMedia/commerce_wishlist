@@ -1,1 +1,12 @@
 name = Commerce Wishlist
+description = 
+package = "Commerce (contrib)"
+dependencies[] = commerce
+dependencies[] = commerce_product
+dependencies[] = views
+core = 7.x
+
+; Base module files
+files[] = commerce_wishlist.module
+
+project = "commerce_wishlist"

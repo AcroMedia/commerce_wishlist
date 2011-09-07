@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * @file
+ * Provides the wishlist for use in Drupal Commerce.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function commerce_wishlist_menu() {
+  $items = array();
+
+  // Add a menu item for capturing authorizations.
+  $items['user/%user/wishlist/delete/%'] = array(
+    'title' => 'Wishlist Delete',
+    'page callback' => 'commerce_wishlist_list',
+    'page arguments' => array(1), 
+    'access callback' => 'user_access',
+    'access arguments' => array('access user profiles', 1),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function commerce_wishlist_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'commerce_wishlist') . '/includes/views',
+  );
+}
+
+/**
+ *
+ */
+function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
+  if (strstr($form_id, 'commerce_cart_add_to_cart_form') && !strstr($_GET['q'], '/wishlist')) {
+    $form += commerce_wishlist_add_form();
+    $form['#submit'] = array('commerce_wishlist_add_form_submit');
+  }
+}
+
+/**
+ *
+ */
+function commerce_wishlist_add_form() {
+  $form['add_to_wishlist'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add to Wishlist')
+  );
+
+  return $form;
+}
+
+/**
+ *
+ */
+function commerce_wishlist_add_form_submit($form, &$form_state) {
+  global $user;
+
+  if ($form_state['values']['op'] == t('Add to Wishlist')) {  
+    db_insert('commerce_wishlist')
+      ->fields(array(
+        'uid' => $user->uid, 
+        'nid' => $form_state['build_info']['args'][2]['entity']->nid, 
+        'product_id' => $form_state['values']['product_id'],
+      ))
+      ->execute();
+
+    drupal_set_message(t('%title added to <a href="%url">your wishlist</a>.', array('%title' => $form_state['build_info']['args'][2]['entity']->title, '%url' => url('user/'. $user->uid .'/wishlist'))));
+  } else {
+    commerce_cart_add_to_cart_form_submit($form, $form_state);
+  }
+}
+
+/**
+ *
+ */
+function commerce_wishlist_delete($wishlist_id) {
+
+}
