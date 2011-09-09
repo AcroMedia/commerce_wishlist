@@ -1,6 +1,6 @@
 name = Commerce Wishlist
-description = 
-package = "Commerce (contrib)"
+description = Create a wishlist to Drupal Commerce
+package = Commerce (contrib)
 dependencies[] = commerce
 dependencies[] = commerce_product
 dependencies[] = views
@@ -8,5 +8,8 @@ core = 7.x
 
 ; Base module files
 files[] = commerce_wishlist.module
+
+; Views handlers files
+files[] = includes/views/handlers/commerce_wishlist_handler_field_product_link_delete.inc
 
 project = "commerce_wishlist"

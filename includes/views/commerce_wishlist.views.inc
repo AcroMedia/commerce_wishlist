@@ -16,7 +16,7 @@ function commerce_wishlist_views_data() {
     'field' => 'wishlist_id',
     'title' => t('Commerce Wishlist'),
     'help' => t('TODO:'),
-    //'entity type' => 'commerce_product',
+    'entity type' => 'commerce_product',
     'access query tag' => 'commerce_product_access',
   );
 
