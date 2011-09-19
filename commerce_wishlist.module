@@ -11,11 +11,11 @@
 function commerce_wishlist_menu() {
   $items = array();
 
-  $items['wishlist/delete/%'] = array(
+  $items['user/%user/wishlist/delete/%'] = array(
     'page callback' => 'commerce_wishlist_delete',
-    'page arguments' => array(2),
+    'page arguments' => array(2, 5),
     'access callback' => 'commerce_wishlist_access',
-    'access arguments' => array(2),
+    'access arguments' => array(2, 5),
     'type' => MENU_CALLBACK,
   );
 
@@ -39,11 +39,11 @@ function commerce_wishlist_permission() {
   return array(
     'view own wishlist' => array(
       'title' => t('View own wishlist'),
-      'description' => t('TODO:'),
+      'description' => t('Allows a user to see their own wishlist.'),
     ),
-    'administer wishlist' => array(
+    'administer wishlists' => array(
       'title' => t('Administer wishlist'),
-      'description' => t('TODO:'),
+      'description' => t('Allows users to perform any action on wishlists. <em>Warning: Give to trusted roles only; this permission has security implications.</em>'),
     ),
   );
 }
@@ -64,16 +64,17 @@ function commerce_wishlist_commerce_cart_product_add($order, $product, $quantity
 /**
  * Determine whether the user has a given privilege to wishlist.
  */
-function commerce_wishlist_access($wishlist_id) {
-  global $user;
-
+function commerce_wishlist_access($user, $wishlist_id = '') {
   if (user_access('administer wishlist')) return TRUE;
 
-  $result = db_select('commerce_wishlist', 'cw')
-    ->addTag('wishlist')
-    ->fields('cw', array('uid'))
-    ->execute()
-    ->fetchAssoc();
+  if (isset($wishlist_id)) {
+    $result = db_select('commerce_wishlist', 'cw')
+      ->addTag('wishlist')
+      ->fields('cw', array('uid'))
+      ->condition('wishlist_id', $wishlist_id)
+      ->execute()
+      ->fetchAssoc();
+  }
 
   if ($result['uid'] == $user->uid && user_access('view own wishlist')) return TRUE;
 
@@ -97,7 +98,8 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
 function commerce_wishlist_add_form() {
   $form['add_to_wishlist'] = array(
     '#type' => 'submit',
-    '#value' => t('Add to Wishlist')
+    '#value' => t('Add to Wishlist'),
+    '#attributes' => array('class' => array('wishlist')),
   );
 
   return $form;
@@ -112,7 +114,7 @@ function commerce_wishlist_add_form_validate($form, &$form_state) {
     // Verify if is a registed user_access
     if (!$user->uid) {
       form_set_error('add_to_wishlist',
-        t('<a href="@login">Log in</a> or <a href="@register">register</a> to add this product to your wishlist',
+        t('<a href="@login">Log in</a> or <a href="@register">register</a> to add this product to your wishlist.',
           array('@login' => url('user/login', array('query' => drupal_get_destination())), '@register' => url('user/register'))
         )
       );
@@ -153,7 +155,7 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
       ))
       ->execute();
 
-    drupal_set_message(t('%title added to <a href="!url">your wishlist</a>.', array('%title' => $form_state['build_info']['args'][2]['entity']->title, '!url' => url('wishlist'))));
+    drupal_set_message(t('%title added to <a href="!url">your wishlist</a>.', array('%title' => $form_state['build_info']['args'][2]['entity']->title, '!url' => url('user/'. $user->uid .'/wishlist'))));
   } else {
     commerce_cart_add_to_cart_form_submit($form, $form_state);
   }
@@ -162,12 +164,12 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
 /**
  * Access callback: Delete the wishlist product
  */
-function commerce_wishlist_delete($wishlist_id) {
+function commerce_wishlist_delete($user, $wishlist_id) {
   db_delete('commerce_wishlist')
     ->condition('wishlist_id', $wishlist_id)
     ->execute();
 
   drupal_set_message(t('The product has been deleted from your wishlist.'));
-  drupal_goto('wishlist');
+  drupal_goto('user/'. $user->uid .'/wishlist');
 }
 

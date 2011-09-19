@@ -40,6 +40,6 @@ class commerce_wishlist_handler_field_product_link_delete extends views_handler_
 
     $text = !empty($this->options['text']) ? $this->options['text'] : t('delete');
 
-    return l($text, 'wishlist/delete/'. $wishlist_id, array('query' => drupal_get_destination()));
+    return l($text, 'user/'. $uid .'/wishlist/delete/'. $wishlist_id, array('query' => drupal_get_destination()));
   }
 }

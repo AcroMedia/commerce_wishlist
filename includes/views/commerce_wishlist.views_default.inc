@@ -10,7 +10,7 @@
 function commerce_wishlist_views_default_views() {
   $view = new view;
   $view->name = 'wishlist';
-  $view->description = 'Display a list of products for store admin.';
+  $view->description = 'Display a list of products added to wishlist.';
   $view->tag = 'commerce';
   $view->base_table = 'commerce_wishlist';
   $view->human_name = 'Wishlist';
@@ -21,7 +21,8 @@ function commerce_wishlist_views_default_views() {
   /* Display: Defaults */
   $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->display->display_options['title'] = 'Wishlist';
-  $handler->display->display_options['access']['type'] = 'none';
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'view own wishlist';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['query']['options']['query_comment'] = FALSE;
@@ -71,7 +72,7 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['empty']['text']['table'] = 'views';
   $handler->display->display_options['empty']['text']['field'] = 'area';
   $handler->display->display_options['empty']['text']['empty'] = FALSE;
-  $handler->display->display_options['empty']['text']['content'] = 'No products have been created yet.';
+  $handler->display->display_options['empty']['text']['content'] = 'No products have been added yet.';
   $handler->display->display_options['empty']['text']['format'] = 'plain_text';
   /* Relationship: Commerce Wishlist: Owner */
   $handler->display->display_options['relationships']['uid']['id'] = 'uid';
@@ -144,11 +145,18 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['arguments']['uid']['id'] = 'uid';
   $handler->display->display_options['arguments']['uid']['table'] = 'commerce_wishlist';
   $handler->display->display_options['arguments']['uid']['field'] = 'uid';
+  $handler->display->display_options['arguments']['uid']['default_action'] = 'not found';
   $handler->display->display_options['arguments']['uid']['default_argument_type'] = 'fixed';
   $handler->display->display_options['arguments']['uid']['default_argument_skip_url'] = 0;
   $handler->display->display_options['arguments']['uid']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['uid']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['uid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['uid']['specify_validation'] = 1;
+  $handler->display->display_options['arguments']['uid']['validate']['type'] = 'current_user_or_role';
+  $handler->display->display_options['arguments']['uid']['validate_options']['restrict_roles'] = '1';
+  $handler->display->display_options['arguments']['uid']['validate_options']['roles'] = array(
+    3 => '3',
+  );
   $handler->display->display_options['arguments']['uid']['break_phrase'] = 0;
   $handler->display->display_options['arguments']['uid']['not'] = 0;
 
@@ -277,10 +285,10 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['fields']['delete_wishlist']['hide_empty'] = 0;
   $handler->display->display_options['fields']['delete_wishlist']['empty_zero'] = 0;
   $handler->display->display_options['fields']['delete_wishlist']['hide_alter_empty'] = 0;
-  $handler->display->display_options['path'] = 'wishlist';
+  $handler->display->display_options['path'] = 'user/%/wishlist';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Wishlist';
-  $handler->display->display_options['menu']['weight'] = '2';
+  $handler->display->display_options['menu']['weight'] = '14';
   $handler->display->display_options['menu']['name'] = 'user-menu';
   $handler->display->display_options['tab_options']['type'] = 'normal';
   $handler->display->display_options['tab_options']['title'] = 'Products';
@@ -369,7 +377,7 @@ function commerce_wishlist_views_default_views() {
     t('Items per page'),
     t('- All -'),
     t('Offset'),
-    t('No products have been created yet.'),
+    t('No products have been added yet.'),
     t('Wishlist owner'),
     t('Wishlist product display'),
     t('Title'),

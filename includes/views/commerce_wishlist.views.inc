@@ -97,7 +97,7 @@ function commerce_wishlist_views_data() {
   $data['commerce_wishlist']['delete_wishlist'] = array(
     'field' => array(
       'title' => t('Delete'),
-      'help' => t('Provide a simple link to delete the product.'),
+      'help' => t('Provide a simple link to delete the product from the wishlist.'),
       'handler' => 'commerce_wishlist_handler_field_product_link_delete',
     ),
   );
