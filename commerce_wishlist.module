@@ -13,9 +13,9 @@ function commerce_wishlist_menu() {
 
   $items['user/%user/wishlist/delete/%'] = array(
     'page callback' => 'commerce_wishlist_delete',
-    'page arguments' => array(2, 5),
+    'page arguments' => array(1, 4),
     'access callback' => 'commerce_wishlist_access',
-    'access arguments' => array(2, 5),
+    'access arguments' => array(1, 4),
     'type' => MENU_CALLBACK,
   );
 
