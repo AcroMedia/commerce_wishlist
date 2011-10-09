@@ -121,14 +121,18 @@ function commerce_wishlist_add_form_validate($form, &$form_state) {
     }
 
     // Verify if this prodcut has been added to wishlist
+    $conditions = db_and();
+    $conditions->condition('uid', $user->uid);
+    $conditions->condition('product_id', $form_state['values']['product_id']);
+    
+    if (isset($form_state['build_info']['args'][2]['entity'])) {
+      $conditions->condition('nid', $form_state['build_info']['args'][2]['entity']->nid);
+    }
+    
     $result = db_select('commerce_wishlist', 'cw')
       ->addTag('wishlist')
       ->fields('cw', array('wishlist_id'))
-      ->condition(db_and()
-        ->condition('uid', $user->uid)
-        ->condition('nid', $form_state['build_info']['args'][2]['entity']->nid)
-        ->condition('product_id', $form_state['values']['product_id'])
-      )
+      ->condition($conditions)
       ->execute()
       ->fetchAssoc();
 
@@ -147,15 +151,18 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
   global $user;
 
   if ($form_state['values']['op'] == t('Add to Wishlist')) {
+    $fields = array('uid' => $user->uid, 'product_id' => $form_state['values']['product_id'], 'quantity' => $form_state['values']['quantity']);
+    if (isset($form_state['build_info']['args'][2]['entity']->nid)) {
+      $fields['nid'] = $form_state['build_info']['args'][2]['entity']->nid;
+    }
+  
     db_insert('commerce_wishlist')
-      ->fields(array(
-        'uid' => $user->uid,
-        'nid' => $form_state['build_info']['args'][2]['entity']->nid,
-        'product_id' => $form_state['values']['product_id'],
-      ))
+      ->fields($fields)
       ->execute();
 
-    drupal_set_message(t('%title added to <a href="!url">your wishlist</a>.', array('%title' => $form_state['build_info']['args'][2]['entity']->title, '!url' => url('user/'. $user->uid .'/wishlist'))));
+    $title = (isset($form_state['build_info']['args'][2]['entity']->title)) ? $form_state['build_info']['args'][2]['entity']->title : $form_state['build_info']['args'][0]->line_item_label;
+
+    drupal_set_message(t('%title added to <a href="!url">your wishlist</a>.', array('%title' => $title, '!url' => url('user/'. $user->uid .'/wishlist'))));
   } else {
     commerce_cart_add_to_cart_form_submit($form, $form_state);
   }

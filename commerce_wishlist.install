@@ -25,13 +25,21 @@ function commerce_wishlist_schema() {
         'description' => 'Node identifier.',
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
+        'not null' => FALSE,
       ),
       'product_id' => array(
         'description' => 'Identifier for a product.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+      ),
+      'quantity' => array(
+        'type' => 'numeric',
+        'size' => 'normal',
+        'not null' => TRUE,
+        'default' => 0,
+        'precision' => 10,
+        'scale' => 2,
       ),
     ),
     'primary key' => array('wishlist_id'),
@@ -53,4 +61,15 @@ function commerce_wishlist_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * 
+ */
+function commerce_wishlist_update_7001(&$sandbox) {
+  // Change NID Collumn
+  db_change_field('commerce_wishlist', 'nid', 'nid', array('type' => 'int', 'not null' => FALSE));
+
+  // New collumn qty
+  db_add_field('commerce_wishlist', 'quantity', array('type' => 'numeric', 'size' => 'normal', 'not null' => TRUE, 'default' => 0, 'precision' => 10, 'scale' => 2));
 }
