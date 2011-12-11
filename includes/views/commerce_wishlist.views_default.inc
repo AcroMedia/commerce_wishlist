@@ -15,7 +15,7 @@ function commerce_wishlist_views_default_views() {
   $view->base_table = 'commerce_wishlist';
   $view->human_name = 'Wishlist';
   $view->core = 0;
-  $view->api_version = '3.0-alpha1';
+  $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Defaults */
@@ -74,11 +74,6 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['empty']['text']['empty'] = FALSE;
   $handler->display->display_options['empty']['text']['content'] = 'No products have been added yet.';
   $handler->display->display_options['empty']['text']['format'] = 'plain_text';
-  /* Relationship: Commerce Wishlist: Owner */
-  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
-  $handler->display->display_options['relationships']['uid']['table'] = 'commerce_wishlist';
-  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
-  $handler->display->display_options['relationships']['uid']['required'] = 0;
   /* Relationship: Commerce Wishlist: Product display (node) */
   $handler->display->display_options['relationships']['nid']['id'] = 'nid';
   $handler->display->display_options['relationships']['nid']['table'] = 'commerce_wishlist';
@@ -89,6 +84,10 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['relationships']['product_id']['table'] = 'commerce_wishlist';
   $handler->display->display_options['relationships']['product_id']['field'] = 'product_id';
   $handler->display->display_options['relationships']['product_id']['required'] = 1;
+  /* Relationship: Commerce Wishlist: Owner */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'commerce_wishlist';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
@@ -154,14 +153,27 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['arguments']['uid']['specify_validation'] = 1;
   $handler->display->display_options['arguments']['uid']['validate']['type'] = 'current_user_or_role';
   $handler->display->display_options['arguments']['uid']['validate_options']['restrict_roles'] = '1';
-  $handler->display->display_options['arguments']['uid']['validate_options']['roles'] = array(
-    3 => '3',
-  );
   $handler->display->display_options['arguments']['uid']['break_phrase'] = 0;
   $handler->display->display_options['arguments']['uid']['not'] = 0;
+  /* Filter criterion: User: Current */
+  $handler->display->display_options['filters']['uid_current']['id'] = 'uid_current';
+  $handler->display->display_options['filters']['uid_current']['table'] = 'users';
+  $handler->display->display_options['filters']['uid_current']['field'] = 'uid_current';
+  $handler->display->display_options['filters']['uid_current']['relationship'] = 'uid';
 
   /* Display: Wishlist */
   $handler = $view->new_display('page', 'Wishlist', 'wishlist');
+  $handler->display->display_options['defaults']['relationships'] = FALSE;
+  /* Relationship: Commerce Wishlist: Product display (node) */
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'commerce_wishlist';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['required'] = 0;
+  /* Relationship: Commerce Wishlist: Product */
+  $handler->display->display_options['relationships']['product_id']['id'] = 'product_id';
+  $handler->display->display_options['relationships']['product_id']['table'] = 'commerce_wishlist';
+  $handler->display->display_options['relationships']['product_id']['field'] = 'product_id';
+  $handler->display->display_options['relationships']['product_id']['required'] = 1;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
@@ -285,6 +297,7 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['fields']['delete_wishlist']['hide_empty'] = 0;
   $handler->display->display_options['fields']['delete_wishlist']['empty_zero'] = 0;
   $handler->display->display_options['fields']['delete_wishlist']['hide_alter_empty'] = 0;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
   $handler->display->display_options['path'] = 'user/%/wishlist';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Wishlist';
@@ -310,6 +323,22 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['row_options']['hide_empty'] = 0;
   $handler->display->display_options['row_options']['default_field_elements'] = 0;
   $handler->display->display_options['defaults']['row_options'] = FALSE;
+  $handler->display->display_options['defaults']['relationships'] = FALSE;
+  /* Relationship: Commerce Wishlist: Product display (node) */
+  $handler->display->display_options['relationships']['nid']['id'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['table'] = 'commerce_wishlist';
+  $handler->display->display_options['relationships']['nid']['field'] = 'nid';
+  $handler->display->display_options['relationships']['nid']['required'] = 0;
+  /* Relationship: Commerce Wishlist: Product */
+  $handler->display->display_options['relationships']['product_id']['id'] = 'product_id';
+  $handler->display->display_options['relationships']['product_id']['table'] = 'commerce_wishlist';
+  $handler->display->display_options['relationships']['product_id']['field'] = 'product_id';
+  $handler->display->display_options['relationships']['product_id']['required'] = 1;
+  /* Relationship: Commerce Wishlist: Owner */
+  $handler->display->display_options['relationships']['uid']['id'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['table'] = 'commerce_wishlist';
+  $handler->display->display_options['relationships']['uid']['field'] = 'uid';
+  $handler->display->display_options['relationships']['uid']['required'] = 1;
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
@@ -364,6 +393,14 @@ function commerce_wishlist_views_default_views() {
     'calculation' => 'calculated_sell_price',
   );
   $handler->display->display_options['fields']['commerce_price']['field_api_classes'] = 0;
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: User: Current */
+  $handler->display->display_options['filters']['uid_current']['id'] = 'uid_current';
+  $handler->display->display_options['filters']['uid_current']['table'] = 'users';
+  $handler->display->display_options['filters']['uid_current']['field'] = 'uid_current';
+  $handler->display->display_options['filters']['uid_current']['relationship'] = 'uid';
+  $handler->display->display_options['filters']['uid_current']['value'] = '1';
   $handler->display->display_options['block_description'] = 'Wishlist';
   $translatables['wishlist'] = array(
     t('Defaults'),

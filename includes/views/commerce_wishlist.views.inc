@@ -76,7 +76,7 @@ function commerce_wishlist_views_data() {
       'name field' => 'name', // display this field in the summary
     ),
     'filter' => array(
-      'title' => t('Name'),
+      'title' => t('Owner'),
       'handler' => 'views_handler_filter_user_name',
     ),
     'sort' => array(
@@ -104,3 +104,4 @@ function commerce_wishlist_views_data() {
 
   return $data;
 }
+
