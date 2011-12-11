@@ -85,7 +85,13 @@ function commerce_wishlist_access($user, $wishlist_id = '') {
  * Implements hook_form_alter().
  */
 function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
-  if (strstr($form_id, 'commerce_cart_add_to_cart_form') && !strstr($_GET['q'], 'wishlist')) {
+  if (strstr($form_id, 'commerce_cart_add_to_cart_form')) {
+    if (isset($form_state['build_info']['args'][0]->data['context']['view'])) {
+      if ($form_state['build_info']['args'][0]->data['context']['view']['view_name'] == 'wishlist') {
+        return;
+      }
+    }
+
     $form += commerce_wishlist_add_form();
     $form['#submit'] = array('commerce_wishlist_add_form_submit');
     $form['#validate'][] = 'commerce_wishlist_add_form_validate';
