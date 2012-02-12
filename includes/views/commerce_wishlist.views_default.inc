@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Views for the default product UI.
+ * Views for the default Wishlist UI.
  */
 
 /**
@@ -153,6 +153,9 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['arguments']['uid']['specify_validation'] = 1;
   $handler->display->display_options['arguments']['uid']['validate']['type'] = 'current_user_or_role';
   $handler->display->display_options['arguments']['uid']['validate_options']['restrict_roles'] = '1';
+  $handler->display->display_options['arguments']['uid']['validate_options']['roles'] = array(
+    3 => '3',
+  );
   $handler->display->display_options['arguments']['uid']['break_phrase'] = 0;
   $handler->display->display_options['arguments']['uid']['not'] = 0;
   /* Filter criterion: User: Current */

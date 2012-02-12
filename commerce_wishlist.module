@@ -93,8 +93,6 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
     }
 
     $form += commerce_wishlist_add_form();
-    $form['#submit'] = array('commerce_wishlist_add_form_submit');
-    $form['#validate'][] = 'commerce_wishlist_add_form_validate';
   }
 }
 
@@ -106,6 +104,8 @@ function commerce_wishlist_add_form() {
     '#type' => 'submit',
     '#value' => t('Add to Wishlist'),
     '#attributes' => array('class' => array('wishlist')),
+    '#validate' => array('commerce_wishlist_add_form_validate'),
+    '#submit' => array('commerce_wishlist_add_form_submit'),
   );
 
   return $form;
