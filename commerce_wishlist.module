@@ -86,6 +86,10 @@ function commerce_wishlist_access($user, $wishlist_id = '') {
  */
 function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
   if (strstr($form_id, 'commerce_cart_add_to_cart_form')) {
+    // check if product is disabled
+    if (isset($form['submit']['#attributes']['disabled']) && ($form['submit']['#attributes']['disabled'] == 'disabled')) {
+      return;
+    }
     if (isset($form_state['build_info']['args'][0]->data['context']['view'])) {
       if ($form_state['build_info']['args'][0]->data['context']['view']['view_name'] == 'wishlist') {
         return;
