@@ -80,7 +80,7 @@ function commerce_wishlist_commerce_cart_product_add($order, $product, $quantity
  * Determine whether the user has a given privilege to wishlist.
  */
 function commerce_wishlist_access($user, $wishlist_id = '') {
-  if (user_access('administer wishlist')) return TRUE;
+  if (user_access('administer wishlists')) return TRUE;
 
   if (isset($wishlist_id)) {
     $result = db_select('commerce_wishlist', 'cw')
