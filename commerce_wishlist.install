@@ -73,3 +73,14 @@ function commerce_wishlist_update_7001(&$sandbox) {
   // New collumn qty
   db_add_field('commerce_wishlist', 'quantity', array('type' => 'numeric', 'size' => 'normal', 'not null' => TRUE, 'default' => 0, 'precision' => 10, 'scale' => 2));
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function commerce_wishlist_uninstall() {
+  // Removes the configuration
+  variable_del('commerce_wishlist_element');
+  variable_del('commerce_wishlist_remove_product');
+  variable_del('commerce_wishlist_product_types');
+  variable_del('commerce_wishlist_weight');
+}
