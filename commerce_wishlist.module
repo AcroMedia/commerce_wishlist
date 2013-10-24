@@ -125,7 +125,7 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
     }
 
     $product_id = $form_state['default_product']->product_id;
-    $nid = $form_state['context']['entity']->nid;
+    $nid = _commerce_wishlist_get_context_entity_id($form_state['context']);
     $element = variable_get('commerce_wishlist_element', 'button');
     $in_wishlist = commerce_wishlist_in_wishlist($user->uid, $product_id);
     $link_exists = _commerce_wishlist_link($user->uid);
@@ -228,10 +228,8 @@ function commerce_wishlist_add_form_validate($form, &$form_state) {
       );
     }
 
-    $nid = NULL;
-    if (isset($form_state['build_info']['args'][2]['entity'])) {
-      $nid = $form_state['build_info']['args'][2]['entity']->nid;
-    }
+    // Get nid from context information
+    $nid = _commerce_wishlist_get_context_entity_id($form_state['build_info']['args'][2]);
 
     // Verify if this prodcut has been added to wishlist
     $in_wishlist = commerce_wishlist_in_wishlist($user->uid, $form_state['values']['product_id'], $nid);
@@ -252,9 +250,7 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
 
   if ($form_state['values']['op'] == t('Add to Wishlist')) {
     $fields = array('uid' => $user->uid, 'product_id' => $form_state['values']['product_id'], 'quantity' => $form_state['values']['quantity']);
-    if (isset($form_state['build_info']['args'][2]['entity']->nid)) {
-      $fields['nid'] = $form_state['build_info']['args'][2]['entity']->nid;
-    }
+    $fields['nid'] = _commerce_wishlist_get_context_entity_id($form_state['build_info']['args'][2]);
 
     commerce_wishlist_add_product($fields);
 
@@ -354,3 +350,23 @@ function _commerce_wishlist_link($uid) {
     '@url' => url('user/' . $uid . '/wishlist')));
 }
 
+/**
+ * Helper function for getting entity ID. There has been an API change in
+ * Drupal Commerce 7.x-1.6 release. See https://drupal.org/node/1863776
+ * @param $context
+ *   The context array stored in $form_state
+ * @return mixed
+ *   An entity ID. NULL if couldn't figure out the entity ID.
+ */
+function _commerce_wishlist_get_context_entity_id($context) {
+  // TODO: What if it's not a node?
+  if ($context['entity_type'] == 'node') {
+    if (isset($context['entity'])) {
+      return $context['entity']->nid;
+    }
+    elseif (isset($context['entity_id'])) {
+      return $context['entity_id'];
+    }
+  }
+  return NULL;
+}
