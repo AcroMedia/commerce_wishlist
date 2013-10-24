@@ -67,13 +67,16 @@ function commerce_wishlist_permission() {
  * Implements hook_commerce_cart_product_add().
  */
 function commerce_wishlist_commerce_cart_product_add($order, $product, $quantity, $line_item) {
-  // When add product to cart delete product from wishlist
-  db_delete('commerce_wishlist')
-    ->condition(db_and()
-        ->condition('uid', $order->uid)
-        ->condition('product_id', $product->product_id)
-    )
-    ->execute();
+  // When add product to cart delete product from wishlist if the configuration
+  // is set to do so.
+  if (variable_get('commerce_wishlist_remove_product', 1)) {
+    db_delete('commerce_wishlist')
+      ->condition(db_and()
+          ->condition('uid', $order->uid)
+          ->condition('product_id', $product->product_id)
+      )
+      ->execute();
+  }
 }
 
 /**
