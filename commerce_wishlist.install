@@ -7,7 +7,7 @@ function commerce_wishlist_schema() {
   $schema = array();
 
   $schema['commerce_wishlist'] = array(
-    'description' => 'The base table for commerce wishlist.',
+    'description' => 'The base table for commerce wishlist',
     'fields' => array(
       'wishlist_id' => array(
         'description' => 'The primary identifier for a wishlist.',
@@ -17,6 +17,34 @@ function commerce_wishlist_schema() {
       ),
       'uid' => array(
         'description' => 'User identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('wishlist_id'),
+    'indexes' => array(
+      'wishlist_uid' => array('uid'),
+    ),
+    'foreign keys' => array(
+      'owner' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+  );
+
+  $schema['commerce_wishlist_item'] = array(
+    'description' => 'Table for products in a Commerce wishlist',
+    'fields' => array(
+      'item_id' => array(
+        'description' => 'The primary identifier for a wishlist item.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'wishlist_id' => array(
+        'description' => 'The wishlist ID this item belongs to.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -41,22 +69,33 @@ function commerce_wishlist_schema() {
         'precision' => 10,
         'scale' => 2,
       ),
-    ),
-    'primary key' => array('wishlist_id'),
-    'unique keys' => array('unique' => array('uid', 'nid', 'product_id')),
-    'foreign keys' => array(
-      'owner' => array(
-        'table' => 'users',
-        'columns' => array('uid' => 'uid'),
+      'added' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Timestamp for when the product was added to the wishlist.',
       ),
-      'product_display' => array(
+    ),
+    'primary key' => array('item_id'),
+    'foreign keys' => array(
+      'commerce_wishlist', array(
+        'table' => 'commerce_wishlist',
+        'columns' => array('wishlist_id' => 'wishlist_id'),
+      ),
+      'wishlist_product_display' => array(
         'table' => 'node',
         'columns' => array('nid' => 'nid'),
       ),
-      'product' => array(
+      'wishlist_product' => array(
         'table' => 'commerce_product',
         'columns' => array('product_id' => 'product_id'),
       ),
+    ),
+    'indexes' => array(
+      'item_added' => array('added'),
+      'item_wishlist_id' => array('wishlist_id'),
+      'item_product_id' => array('product_id'),
     ),
   );
 
@@ -64,23 +103,11 @@ function commerce_wishlist_schema() {
 }
 
 /**
- * 
- */
-function commerce_wishlist_update_7001(&$sandbox) {
-  // Change NID Collumn
-  db_change_field('commerce_wishlist', 'nid', 'nid', array('type' => 'int', 'not null' => FALSE));
-
-  // New collumn qty
-  db_add_field('commerce_wishlist', 'quantity', array('type' => 'numeric', 'size' => 'normal', 'not null' => TRUE, 'default' => 0, 'precision' => 10, 'scale' => 2));
-}
-
-/**
  * Implements hook_uninstall().
  */
 function commerce_wishlist_uninstall() {
-  // Removes the configuration
+  // Remove module variables.
   variable_del('commerce_wishlist_element');
-  variable_del('commerce_wishlist_remove_product');
   variable_del('commerce_wishlist_product_types');
   variable_del('commerce_wishlist_weight');
 }

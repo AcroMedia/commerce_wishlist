@@ -1,15 +1,13 @@
 name = Commerce Wishlist
-description = Create a wishlist to Drupal Commerce
+description = Allows users to create public product wishlists.
 package = Commerce (contrib)
 dependencies[] = commerce
 dependencies[] = commerce_product
 dependencies[] = views
 core = 7.x
-
-; Base module files
-files[] = commerce_wishlist.module
+configure = admin/commerce/config/wishlist
 
 ; Views handlers files
-files[] = includes/views/handlers/commerce_wishlist_handler_field_product_link_delete.inc
+files[] = includes/views/handlers/commerce_wishlist_handler_field_product_link_remove.inc
 
 project = "commerce_wishlist"
