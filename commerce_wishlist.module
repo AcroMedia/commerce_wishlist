@@ -143,7 +143,6 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
           if ($in_wishlist) {
             $form['add_to_wishlist'] = array(
               '#markup' => $link_exists,
-              '#weight' => variable_get('commerce_wishlist_weight', 0),
             );
           }
           break;
@@ -174,11 +173,11 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
           // Add the "Add to wishlist" button to the form.
           $form['add_to_wishlist'] = array(
             '#markup' => $link,
-            '#weight' => variable_get('commerce_wishlist_weight', 0),
           );
           break;
       }
 
+      $form['add_to_wishlist']['#weight'] = variable_get('commerce_wishlist_weight', 0);
       $form['add_to_wishlist']['#access'] = $access;
     }
   }
