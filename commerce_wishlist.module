@@ -183,7 +183,7 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
   }
 
   if ($form_id == 'user_login' && !empty($_GET['product_id'])) {
-    $form['#submit'][] = 'commerce_wishlist_user_login';
+    $form['#submit'][] = '_commerce_wishlist_user_login_submit';
   }
 }
 
@@ -422,7 +422,7 @@ function commerce_wishlist_product_added_to_cart($form, &$form_state) {
  * Form submit handler called after an anonymous user tries to add a product to
  * his/her wishlist.
  */
-function commerce_wishlist_user_login($form, &$form_state) {
+function _commerce_wishlist_user_login_submit($form, &$form_state) {
   if (!empty($form_state['uid'])) {
     $url = 'wishlist-actions/nojs/add/' . $form_state['uid'] . '/' . $_GET['product_id'] . '/' . $_GET['nid'];
     $form_state['redirect'] = array(
