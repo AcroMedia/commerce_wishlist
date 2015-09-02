@@ -193,22 +193,28 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
 function commerce_wishlist_entity_delete($entity, $type) {
   switch ($type) {
     case 'user':
-      // Remove all wishlist products for this user.
-      db_delete('commerce_wishlist')
-        ->condition('uid', $entity->uid)
-        ->execute();
+      // Remove all wishlist items (and the wishlist itself) for this user.
+      if ($wishlist = _commerce_wishlist_load_wishlist($entity->uid)) {
+        db_delete('commerce_wishlist_item')
+          ->condition('wishlist_id', $wishlist->wishlist_id)
+          ->execute();
+
+        db_delete('commerce_wishlist')
+          ->condition('wishlist_id', $wishlist->wishlist_id)
+          ->execute();
+      }
       break;
 
     case 'node':
       // Remove all wishlist products that were tied to this node.
-      db_delete('commerce_wishlist')
+      db_delete('commerce_wishlist_item')
         ->condition('nid', $entity->nid)
         ->execute();
       break;
 
     case 'commerce_product':
       // Remove all wishlist entries that were referenced by this product.
-      db_delete('commerce_wishlist')
+      db_delete('commerce_wishlist_item')
         ->condition('product_id', $entity->product_id)
         ->execute();
       break;
