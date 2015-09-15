@@ -653,25 +653,27 @@ function _commerce_wishlist_create_wishlist($uid) {
 function _commerce_wishlist_remove_product_for_user($product_id, $user_id) {
   // Get the node ID first. This will be used as an argument for rules.
   $query = db_select('commerce_wishlist', 'cw')
-    ->addTag('commerce_wishlist')
-    ->fields('wi')
-    ->condition('cw.uid', $user_id)
-    ->condition('wi.product_id', $product_id);
+    ->addTag('commerce_wishlist');
 
   $query->join('commerce_wishlist_item', 'wi', 'wi.wishlist_id = cw.wishlist_id');
-  $wishlist_item = $query->execute()->fetchObject();
-  $nid = $wishlist_item->nid;
+  $query->fields('wi');
+  $query->condition('cw.uid', $user_id);
+  $query->condition('wi.product_id', $product_id);
 
-  // Remove the item from the database.
-  db_delete('commerce_wishlist', 'cw')
-    ->condition('item_id', $wishlist_item->item_id)
-    ->execute();
+  if ($wishlist_item = $query->execute()->fetchObject()) {
+    $nid = $wishlist_item->nid;
 
-  // Invoke the appropriate rule.
-  $account = user_load($user_id);
-  $product = commerce_product_load($product_id);
-  $node    = node_load($nid);
-  rules_invoke_event('commerce_wishlist_event_product_removed', $account, $product, $node);
+    // Remove the item from the database.
+    db_delete('commerce_wishlist_item')
+      ->condition('item_id', $wishlist_item->item_id)
+      ->execute();
+
+    // Invoke the appropriate rule.
+    $account = user_load($user_id);
+    $product = commerce_product_load($product_id);
+    $node    = node_load($nid);
+    rules_invoke_event('commerce_wishlist_event_product_removed', $account, $product, $node);
+  }
 }
 
 /**
