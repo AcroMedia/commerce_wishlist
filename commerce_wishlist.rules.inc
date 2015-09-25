@@ -65,6 +65,10 @@ function commerce_wishlist_rules_event_info() {
           'type'  => 'node',
           'label' => t('Product node'),
         ),
+        'commerce_order' => array(
+          'type' => 'commerce_order',
+          'label' => t('The order that the product was purchased in.'),
+        ),
       ),
     ),
     'commerce_wishlist_event_product_removed' => array(

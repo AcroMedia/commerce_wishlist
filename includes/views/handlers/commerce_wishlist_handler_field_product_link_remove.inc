@@ -45,7 +45,11 @@ class commerce_wishlist_handler_field_product_link_remove extends views_handler_
     if (commerce_wishlist_manage_access($account, $wishlist_id)) {
       $text = !empty($this->options['text']) ? $this->options['text'] : t('Remove');
 
-      return l($text, 'user/' . $wishlist_owner . '/wishlist/remove/' . $wishlist_id);
+      $destination = drupal_get_destination();
+
+      return l($text, 'user/' . $wishlist_owner . '/wishlist/remove/' . $wishlist_id, (array(
+        'query' => $destination,
+      )));
     }
 
     return '';

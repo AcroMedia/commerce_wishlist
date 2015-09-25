@@ -232,14 +232,12 @@ function commerce_wishlist_commerce_checkout_complete($order) {
     // will check only if the line item has wishlist user IDs defined in the
     // data storage.
     if (isset($line_item->data['wishlist_products']) && count($line_item->data['wishlist_products'])) {
-      // Loop through the users whose wishlist products are linked to this line
-      // item and remove them from the database.
       foreach ($line_item->data['wishlist_products'] as $wishlist_product) {
         // Invoke appropriate event.
         $account = user_load($wishlist_product['user_id']);
         $product = commerce_product_load($wishlist_product['product_id']);
         $node    = node_load($wishlist_product['node_id']);
-        rules_invoke_event('commerce_wishlist_event_product_purchased', $account, $product, $node);
+        rules_invoke_event('commerce_wishlist_event_product_purchased', $account, $product, $node, $order);
       }
     }
   }
@@ -493,6 +491,13 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
     'product_id' => $form_state['values']['product_id'],
     'quantity'   => $form_state['values']['quantity'],
   ));
+
+  $product = commerce_product_load($form_state['values']['product_id']);
+
+  drupal_set_message(t('Product <em>@product</em> has been added to <a href="@url">your wishlist</a>.', array(
+    '@product' => $product->title,
+    '@url' => url('user/' . $user->uid . '/wishlist', array('absolute' => TRUE)),
+  )));
 }
 
 /**
@@ -516,15 +521,16 @@ function commerce_wishlist_remove($account, $item_id) {
     db_delete('commerce_wishlist_item')
       ->condition('item_id', $item_id)
       ->execute();
+
+    drupal_set_message(t('@product has been removed from your wishlist.', array(
+      '@product' => $product->title,
+    )));
   }
   else {
     drupal_set_message(t('Unable to remove that item from your wishlist'), 'error');
   }
 
-  // This seems to be necessary so that Drupal can continue execution as usual.
-  // If this part is left out, the rule will be called but there will be no
-  // redirect or any output. Only white blank page will be displayed.
-  return '';
+  drupal_goto('user/wishlist/' . $account->uid . '/wishlist');
 }
 
 /**
@@ -567,6 +573,7 @@ function commerce_wishlist_operations() {
           'nid'        => $args[4],
           'quantity'   => 1,
         ));
+
         break;
     }
 
