@@ -79,7 +79,7 @@ function commerce_wishlist_schema() {
     ),
     'primary key' => array('item_id'),
     'foreign keys' => array(
-      'commerce_wishlist', array(
+      'commerce_wishlist' => array(
         'table' => 'commerce_wishlist',
         'columns' => array('wishlist_id' => 'wishlist_id'),
       ),
