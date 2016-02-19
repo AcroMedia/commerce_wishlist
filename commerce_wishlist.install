@@ -8,7 +8,7 @@
 /**
  * Convert wish lists to use orders.
  */
-function commerce_wishlist_update_7201(&$sandbox) {
+function commerce_wishlist_update_7300(&$sandbox) {
   if (!isset($sandbox['wishlist']['progress'])) {
     $sandbox['wishlist']['progress'] = 0;
     $sandbox['wishlist']['current_id'] = 0;
@@ -76,7 +76,7 @@ function commerce_wishlist_update_7201(&$sandbox) {
 /**
  * Delete the old wishlist tables from the database.
  */
-function commerce_wishlist_update_7202() {
+function commerce_wishlist_update_7301() {
   db_delete('commerce_wishlist');
   db_delete('commerce_wishlist_item');
 }
