@@ -7,6 +7,7 @@
  * Available variables:
  *   $account - The user account that the wishlist belongs to.
  */
+
 ?>
 <div class="commerce-wishlist-share">
   <p class="commerce-wishlist-share-description">
@@ -17,6 +18,3 @@
     <?php print url('user/' . $account->uid . '/wishlist', array('absolute' => TRUE)); ?>
   </p>
 </div>
-
-
-

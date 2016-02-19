@@ -15,7 +15,6 @@ function commerce_wishlist_default_rules_configuration() {
   $rules['rules_commerce_wishlist_product_purchased'] = entity_import('rules_config', '{"rules_commerce_wishlist_product_purchased":{"LABEL":"Remove product from wishlist after purchase","PLUGIN":"reaction rule","OWNER":"rules","TAGS":["Commerce Wishlist"],"REQUIRES":["rules","commerce_wishlist"],"ON":{"commerce_wishlist_event_product_purchased":[]},"IF":[{"data_is":{"data":["commerce-wishlist-owner:uid"],"value":["commerce-order:uid"]}}],"DO":[{"commerce_wishlist_action_remove_product_for_user":{"product":["commerce-wishlist-product"],"account":["commerce-wishlist-owner"]}}]}}');
 
   // Rule triggered when a wishlist product has been added to the shopping cart.
-  //
   // In order to keep this compatible with previous version of the module, this
   // will be imported only if the website has old variable for removing the
   // wishlist products immediately after adding them to the shopping cart.

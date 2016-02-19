@@ -1,105 +1,84 @@
 <?php
 
 /**
- * Implements hook_schema().
+ * @file
+ * Installation hooks.
  */
-function commerce_wishlist_schema() {
-  $schema = array();
 
-  $schema['commerce_wishlist'] = array(
-    'description' => 'The base table for commerce wishlist',
-    'fields' => array(
-      'wishlist_id' => array(
-        'description' => 'The primary identifier for a wishlist.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'uid' => array(
-        'description' => 'User identifier.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('wishlist_id'),
-    'indexes' => array(
-      'wishlist_uid' => array('uid'),
-    ),
-    'foreign keys' => array(
-      'owner' => array(
-        'table' => 'users',
-        'columns' => array('uid' => 'uid'),
-      ),
-    ),
-  );
+/**
+ * Convert wish lists to use orders.
+ */
+function commerce_wishlist_update_7201(&$sandbox) {
+  if (!isset($sandbox['wishlist']['progress'])) {
+    $sandbox['wishlist']['progress'] = 0;
+    $sandbox['wishlist']['current_id'] = 0;
+    $sandbox['wishlist']['max'] = db_query('SELECT COUNT(DISTINCT wishlist_id) FROM {commerce_wishlist}')->fetchField();
+  }
 
-  $schema['commerce_wishlist_item'] = array(
-    'description' => 'Table for products in a Commerce wishlist',
-    'fields' => array(
-      'item_id' => array(
-        'description' => 'The primary identifier for a wishlist item.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'wishlist_id' => array(
-        'description' => 'The wishlist ID this item belongs to.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'nid' => array(
-        'description' => 'Node identifier.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => FALSE,
-      ),
-      'product_id' => array(
-        'description' => 'Identifier for a product.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'quantity' => array(
-        'type' => 'numeric',
-        'size' => 'normal',
-        'not null' => TRUE,
-        'default' => 0,
-        'precision' => 10,
-        'scale' => 2,
-      ),
-      'added' => array(
-        'type' => 'int',
-        'size' => 'normal',
-        'not null' => TRUE,
-        'default' => 0,
-        'description' => 'Timestamp for when the product was added to the wishlist.',
-      ),
-    ),
-    'primary key' => array('item_id'),
-    'foreign keys' => array(
-      'commerce_wishlist' => array(
-        'table' => 'commerce_wishlist',
-        'columns' => array('wishlist_id' => 'wishlist_id'),
-      ),
-      'wishlist_product_display' => array(
-        'table' => 'node',
-        'columns' => array('nid' => 'nid'),
-      ),
-      'wishlist_product' => array(
-        'table' => 'commerce_product',
-        'columns' => array('product_id' => 'product_id'),
-      ),
-    ),
-    'indexes' => array(
-      'item_added' => array('added'),
-      'item_wishlist_id' => array('wishlist_id'),
-      'item_product_id' => array('product_id'),
-    ),
-  );
+  // Get the next four coupon ids.
+  $wishlist_ids = db_select('commerce_wishlist', 'cw')
+    ->fields('cw', array('wishlist_id', 'uid'))
+    ->condition('wishlist_id', $sandbox['wishlist']['current_id'], '>')
+    ->range(0, 10)
+    ->orderBy('wishlist_id', 'ASC')
+    ->execute()
+    ->fetchAll();
 
-  return $schema;
+  // Update the coupons.
+  if ($wishlist_ids) {
+    foreach ($wishlist_ids as $wishlist) {
+      $product_ids = db_select('commerce_wishlist_item', 'cwi')
+        ->fields('cwi')
+        ->condition('wishlist_id', $wishlist->wishlist_id)
+        ->execute()
+        ->fetchAll();
+
+      if (!$product_ids) {
+        $sandbox['wishlist']['progress']++;
+        $sandbox['wishlist']['current_id'] = $wishlist->coupon_id;
+        continue;
+      }
+
+      $wishlist_order = commerce_wishlist_order_new($wishlist->uid);
+
+      foreach ($product_ids as $wishlist_product) {
+        $product = commerce_product_load($wishlist_product->product_id);
+
+        $line_item = commerce_product_line_item_new($product, 1);
+        $line_item->created = $wishlist_product->added;
+        $line_item->quantity = $wishlist_product->quantity > 1 ? $wishlist_product->quantity : 1;
+        $line_item->commerce_display_path[LANGUAGE_NONE][0] = array('value' => 'node/' . $wishlist_product->nid);
+
+        // Set the incoming line item's order_id.
+        $line_item->order_id = $wishlist_order->order_id;
+
+        // Save the incoming line item now so we get its ID.
+        commerce_line_item_save($line_item);
+
+        // Add it to the order's line item reference value.
+        $wishlist_order->commerce_line_items[LANGUAGE_NONE][] = array('line_item_id' => $line_item->line_item_id);
+      }
+
+      // Save the updated order.
+      commerce_order_save($wishlist_order);
+
+      $sandbox['wishlist']['progress']++;
+      $sandbox['wishlist']['current_id'] = $wishlist->coupon_id;
+    }
+  }
+  else {
+    $sandbox['wishlist']['#finished'] = 1;
+  }
+
+  $sandbox['wishlist']['#finished'] = empty($sandbox['wishlist']['max']) ? 1 : ($sandbox['wishlist']['progress'] / $sandbox['wishlist']['max']);
+}
+
+/**
+ * Delete the old wishlist tables from the database.
+ */
+function commerce_wishlist_update_7202() {
+  db_delete('commerce_wishlist');
+  db_delete('commerce_wishlist_item');
 }
 
 /**

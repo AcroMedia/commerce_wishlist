@@ -5,6 +5,9 @@
  * Provides the wishlist for use in Drupal Commerce.
  */
 
+/**
+ * Form callback: settings form.
+ */
 function commerce_wishlist_admin_form($form, &$form_state) {
   $form['commerce_wishlist_weight'] = array(
     '#type' => 'textfield',
