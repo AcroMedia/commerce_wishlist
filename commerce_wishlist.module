@@ -75,7 +75,7 @@ function commerce_wishlist_permission() {
     'configure wish lists' => array(
       'title' => t('Configure wish lists'),
       'description' => t('Change wish list configuration options.'),
-    )
+    ),
   );
 }
 
@@ -151,7 +151,7 @@ function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
     }
 
     // If it's already in the wishlist, show the already in wishlist link.
-    //Otherwise, show the button or link as configured.
+    // Otherwise, show the button or link as configured.
     if (commerce_wishlist_user_has_product_in_wishlist($product_id)) {
       $form['add_to_wishlist'] = array(
         '#markup' => theme('commerce_wishlist_already_in_wishlist_link', array('user_id' => $user->uid)),
@@ -498,15 +498,24 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
 /**
  * Page callback: handle deletion of a wish list item.
  *
- * @param int $line_item_id
- *
- * @param $account
+ * @param object $line_item
+ *   The wish list product line item.
+ * @param object $account
+ *   The account.
  */
 function commerce_wishlist_product_remove_page($line_item, $account) {
   commerce_wishlist_product_remove_line_item($line_item, $account);
   drupal_goto();
 }
 
+/**
+ * Ajax callback to handle deletion of wish list item.
+ *
+ * @param object $line_item
+ *   The wish list product line item.
+ * @param object $account
+ *   The account.
+ */
 function commerce_wishlist_product_remove_ajax($line_item, $account) {
   $product_id = commerce_product_load($line_item->commerce_product[LANGUAGE_NONE][0]['product_id']);
   commerce_wishlist_product_remove_line_item($line_item, $account);
@@ -781,10 +790,10 @@ function commerce_wishlist_user_has_product_in_wishlist($product_id, $uid = NULL
  * commerce_wishlist_order_load(). If no account is provided, it will default to
  * the logged in user.
  *
- * @param object $product
- *   The product to remove.
- * @param int|null $account
- *   The account of the owner of the wishlist.
+ * @param object $line_item
+ *   The wish list product line item.
+ * @param object $account
+ *   The account.
  * @param object|null $wishlist
  *   The wishlist to remove the product from.
  */

@@ -15,7 +15,7 @@ function commerce_wishlist_update_7300(&$sandbox) {
     $sandbox['wishlist']['max'] = db_query('SELECT COUNT(DISTINCT wishlist_id) FROM {commerce_wishlist}')->fetchField();
   }
 
-  // Get the next four coupon ids.
+  // Get ten wishlists at a time.
   $wishlist_ids = db_select('commerce_wishlist', 'cw')
     ->fields('cw', array('wishlist_id', 'uid'))
     ->condition('wishlist_id', $sandbox['wishlist']['current_id'], '>')
