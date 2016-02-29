@@ -102,7 +102,7 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
   }
 
   /**
-   * Access to commerce wishlist admin.
+   * Access to Commerce wish list admin.
    */
   public function testCommerceWishlistUI() {
     // Login with store admin.
@@ -152,29 +152,66 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     $this->assertText('There are no items in this wish list.', 'No more products in the listing.');
   }
 
-  public function testCommerceWishlistOrderVisibility() {
-    // @todo make sure that Wish lists aren't shown regular order views or
-    // accidentally used as carts.
-  }
-
-
   /**
-   * Anonymous usage of the Wishlist module.
+   * Anonymous usage of the Wish list module.
    */
   public function testCommerceWishlistAnonymousUI() {
+    $this->drupalLogout();
     // Load a product page.
     $this->drupalGet('node/' . $this->product_node->uid);
     // Make sure Add to Wishlist is on the page.
     $this->assertRaw('Add to Wishlist');
     // Submit the button.
-    $this->drupalPost('node/' . $this->product_node->uid, array(), t('Add to Wishlist'));
-    // Upon refresh, the item should be in our wishlist.
-    $this->assertText('Already in your wishlist.');
+    $edit = array(
+      'product_id' => 1,
+    );
+    $this->drupalPost($this->getUrl(), $edit, t('Add to Wishlist'));
 
-  }
+    $message = t('Please <a href="@login">log in</a> or <a href="@register">register</a> to add this product to your wish list.',
+      array(
+        '@login' => url('user/login', array('query' => array('destination' => 'node/1'))),
+        '@register' => url('user/register'),
+      )
+    );
+    $this->assertRaw($message, t('Error adding to wish list displayed.'));
 
-  public function testCommerceWishlistBlock() {
+    $this->drupalLogin($this->store_customer);
 
+    $message = t('Product <em>@product</em> has been added to <a href="@url">your wish list</a>.', array(
+      '@product' => $this->product->title,
+      '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
+    ));
+
+    $this->assertRaw($message, t('Product added to wish list after login.'));
+
+    $this->drupalLogout();
+
+    // Check to see if the error will show when we try to add it again.
+    $this->drupalGet('node/' . $this->product_node->uid);
+    // Make sure Add to Wishlist is on the page.
+    $this->assertRaw('Add to Wishlist');
+    // Submit the button.
+    $edit = array(
+      'product_id' => 1,
+    );
+    $this->drupalPost($this->getUrl(), $edit, t('Add to Wishlist'));
+
+    $message = t('Please <a href="@login">log in</a> or <a href="@register">register</a> to add this product to your wish list.',
+      array(
+        '@login' => url('user/login', array('query' => array('destination' => 'node/1'))),
+        '@register' => url('user/register'),
+      )
+    );
+    $this->assertRaw($message, t('Error adding to wish list displayed.'));
+
+    $this->drupalLogin($this->store_customer);
+
+    $message = t('Product <em>@product</em> was already in <a href="@url">your wish list</a>.', array(
+      '@product' => $this->product->title,
+      '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
+    ));
+
+    $this->assertRaw($message, t('Product was not added to wish list.'));
   }
 
 }
