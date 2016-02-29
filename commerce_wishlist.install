@@ -6,6 +6,14 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function commerce_wishlist_install() {
+  // Grant users the ability to manage their own wishlist by default.
+  user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, array('manage own wish list'));
+}
+
+/**
  * Convert wish lists to use orders.
  */
 function commerce_wishlist_update_7300(&$sandbox) {

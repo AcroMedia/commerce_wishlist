@@ -104,6 +104,9 @@ function commerce_wishlist_theme($existing, $type, $theme, $path) {
     'commerce_wishlist_already_in_wishlist_link' => array(
       'variables' => array('user_id' => NULL),
     ),
+    'commerce_wishlist_added_to_wishlist_link' => array(
+      'variables' => array('user_id' => NULL, 'product' => NULL),
+    ),
     'commerce_wishlist_user_wishlist_page_title' => array(
       'variables' => array('account' => NULL),
     ),
@@ -283,6 +286,16 @@ function theme_commerce_wishlist_already_in_wishlist_link(&$variables) {
 }
 
 /**
+ * Added to cart link theme callback.
+ */
+function theme_commerce_wishlist_added_to_wishlist_link(&$variables) {
+  return t('Added to <a class="in-wishlist" href="@url">your wish list</a>.', array(
+    '@title' => $variables['product']->title,
+    '@url' => url('user/' . $variables['user_id'] . '/wishlist'),
+  ));
+}
+
+/**
  * Add to wishlist theme callback.
  */
 function theme_commerce_wishlist_product_add_link($variables) {
@@ -345,6 +358,7 @@ function commerce_wishlist_manage_access($account, $wishlist = NULL) {
   // Check if the wishlist owner and the user who is trying to edit the wishlist
   // are the same, and if they have permission to manage own wish list.
   global $user;
+
   return ($account->uid == $user->uid
     && user_access('manage own wish list')
     && $wishlist->uid == $account->uid);
@@ -495,7 +509,7 @@ function commerce_wishlist_add_form_submit($form, &$form_state) {
   $product = commerce_product_load($form_state['values']['product_id']);
   commerce_wishlist_product_add($product, NULL, NULL, $form_state['line_item']->data['context']['display_path']);
 
-  drupal_set_message(t('Product <em>@product</em> has been added to <a href="@url">your wishlist</a>.', array(
+  drupal_set_message(t('Product <em>@product</em> has been added to <a href="@url">your wish list</a>.', array(
     '@product' => $product->title,
     '@url' => url('user/' . $user->uid . '/wishlist', array('absolute' => TRUE)),
   )));
@@ -558,7 +572,7 @@ function commerce_wishlist_product_add_ajax($product, $user) {
     commerce_wishlist_product_add($product, NULL, $user->uid, $display_path);
   }
 
-  $link = theme('commerce_wishlist_already_in_wishlist_link', array('user_id' => $user->uid));
+  $link = theme('commerce_wishlist_added_to_wishlist_link', array('user_id' => $user->uid));
   $commands = array(ajax_command_replace('a#add-wishlist-' . $product->product_id, $link));
   ajax_deliver(array('#type' => 'ajax', '#commands' => $commands));
 }
@@ -594,7 +608,7 @@ function commerce_wishlist_order_load($uid = 0) {
 }
 
 /**
- * Returns the current cart order ID for the given user.
+ * Returns the current wish list order ID for the given user.
  *
  * @param int $uid
  *   The uid of the customer whose wishlist to load. If left 0, attempts to load
@@ -764,11 +778,11 @@ function commerce_wishlist_user_has_product_in_wishlist($product_id, $uid = NULL
     return FALSE;
   }
 
-  // Load all wishlists.
+  // Load all wish lists.
   $a = new EntityFieldQuery();
   $a->entityCondition('entity_type', 'commerce_order', '=')
     ->propertyCondition('status', array('wishlist'), 'IN')
-    ->entityCondition('uid', $uid, '=');
+    ->propertyCondition('uid', $uid, '=');
 
   $results = $a->execute();
 
