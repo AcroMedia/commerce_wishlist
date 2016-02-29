@@ -80,7 +80,7 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['empty']['area']['field'] = 'area';
   $handler->display->display_options['empty']['area']['label'] = 'No items in wish list';
   $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = 'There are no items in this wish list.';
+  $handler->display->display_options['empty']['area']['content'] = 'There are no items in your wish list.';
   $handler->display->display_options['empty']['area']['format'] = 'plain_text';
   /* Relationship: Commerce Line Item: Order ID */
   $handler->display->display_options['relationships']['order_id']['id'] = 'order_id';
