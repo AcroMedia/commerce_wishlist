@@ -333,18 +333,18 @@ function theme_commerce_wishlist_user_wishlist_page_title(&$variables) {
  * Determine whether the user has a privilege to manage a wish list.
  */
 function commerce_wishlist_manage_access($account, $wishlist = NULL) {
+  global $user;
   // Allow administrators to edit any wishlist on the site.
   if (user_access('administer wish lists')) {
     return TRUE;
   }
 
-  if ($wishlist === NULL) {
+  if (!is_object($wishlist)) {
     $wishlist = commerce_wishlist_order_load($account->uid);
   }
 
   // Check if the wishlist owner and the user who is trying to edit the wishlist
   // are the same, and if they have permission to manage own wish list.
-  global $user;
   return ($account->uid == $user->uid
     && user_access('manage own wish list')
     && $wishlist->uid == $account->uid);
