@@ -42,7 +42,7 @@ function commerce_wishlist_views_default_views() {
    * View showing the wishlist products of a user.
    */
   $view = new view();
-  $view->name = 'wishlist';
+  $view->name = 'commerce_wishlist_page';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'commerce_line_item';
@@ -50,11 +50,12 @@ function commerce_wishlist_views_default_views() {
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'User wish list';
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'commerce_wishlist_item';
+  $handler->display->display_options['access']['type'] = 'none';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
@@ -117,22 +118,15 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['fields']['wishlist_add_to_cart']['field'] = 'wishlist_add_to_cart';
   $handler->display->display_options['fields']['wishlist_add_to_cart']['label'] = '';
   $handler->display->display_options['fields']['wishlist_add_to_cart']['element_label_colon'] = FALSE;
-  /* Contextual filter: Commerce Order: Uid */
-  $handler->display->display_options['arguments']['uid']['id'] = 'uid';
-  $handler->display->display_options['arguments']['uid']['table'] = 'commerce_order';
-  $handler->display->display_options['arguments']['uid']['field'] = 'uid';
-  $handler->display->display_options['arguments']['uid']['relationship'] = 'order_id';
-  $handler->display->display_options['arguments']['uid']['default_action'] = 'not found';
-  $handler->display->display_options['arguments']['uid']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['uid']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['uid']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['uid']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['uid']['specify_validation'] = TRUE;
-  $handler->display->display_options['arguments']['uid']['validate']['type'] = 'current_user_or_role';
-  $handler->display->display_options['arguments']['uid']['validate_options']['restrict_roles'] = TRUE;
-  $handler->display->display_options['arguments']['uid']['validate_options']['roles'] = array(
-    3 => '3',
-  );
+  /* Contextual filter: Commerce Order: Order ID */
+  $handler->display->display_options['arguments']['order_id']['id'] = 'order_id';
+  $handler->display->display_options['arguments']['order_id']['table'] = 'commerce_order';
+  $handler->display->display_options['arguments']['order_id']['field'] = 'order_id';
+  $handler->display->display_options['arguments']['order_id']['relationship'] = 'order_id';
+  $handler->display->display_options['arguments']['order_id']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['order_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['order_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['order_id']['summary_options']['items_per_page'] = '25';
   /* Filter criterion: Commerce Order: Order state */
   $handler->display->display_options['filters']['state']['id'] = 'state';
   $handler->display->display_options['filters']['state']['table'] = 'commerce_order';
@@ -145,39 +139,6 @@ function commerce_wishlist_views_default_views() {
   $handler->display->display_options['filters']['state']['expose']['label'] = 'Order state';
   $handler->display->display_options['filters']['state']['expose']['operator'] = 'state_op';
   $handler->display->display_options['filters']['state']['expose']['identifier'] = 'state';
-
-  /* Display: Page */
-  $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'user/%/wishlist';
-  $handler->display->display_options['menu']['type'] = 'tab';
-  $handler->display->display_options['menu']['title'] = 'Wish list';
-  $handler->display->display_options['menu']['weight'] = '0';
-  $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;
-  $translatables['wishlist'] = array(
-    t('Master'),
-    t('User wishlist'),
-    t('more'),
-    t('Apply'),
-    t('Reset'),
-    t('Sort by'),
-    t('Asc'),
-    t('Desc'),
-    t('Items per page'),
-    t('- All -'),
-    t('Offset'),
-    t('« first'),
-    t('‹ previous'),
-    t('next ›'),
-    t('last »'),
-    t('Order'),
-    t('Display path'),
-    t('Title'),
-    t('Added'),
-    t('All'),
-    t('Order state'),
-    t('Page'),
-  );
   $views[$view->name] = $view;
 
   // Administrative views.

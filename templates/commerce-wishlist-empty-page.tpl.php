@@ -1,0 +1,1 @@
+Nothing in your wish list. To add some items, click on Add to Wishlist on a product page or listing.

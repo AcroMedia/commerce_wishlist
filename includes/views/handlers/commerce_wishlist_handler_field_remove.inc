@@ -35,7 +35,7 @@ class commerce_wishlist_handler_field_remove extends views_handler_field {
     $wishlist_id = $line_item->order_id;
     $wishlist = commerce_order_load($wishlist_id);
 
-    if (commerce_wishlist_manage_access($account, $wishlist)) {
+    if (commerce_wishlist_user_access($account, 'update', $wishlist)) {
       $text = !empty($this->options['text']) ? $this->options['text'] : t('Remove');
 
       $destination = drupal_get_destination();

@@ -124,7 +124,7 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     // Test the UI.
     $this->drupalGet('user/' . $this->store_customer->uid . '/wishlist');
     $this->assertResponse(200, 'The customer can access the wish list view.');
-    $this->assertText('There are no items in this wish list.');
+    $this->assertText('Nothing in your wish list.');
 
     // Load a product page.
     $this->drupalGet('node/' . $this->product_node->uid);
@@ -153,7 +153,7 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     // Remove it from the wishlist.
     $this->clickLink('Remove');
     // Ensure that there are no items in the wishlist.
-    $this->assertText('There are no items in this wish list.', 'No more products in the listing.');
+    $this->assertText('Nothing in your wish list.', 'No more products in the listing.');
   }
 
   /**
@@ -177,7 +177,7 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
         '@register' => url('user/register'),
       )
     );
-    $this->assertRaw($message, t('Error adding to wish list displayed.'));
+      $this->assertRaw($message, t('Error adding to wish list displayed.'));
 
     $this->drupalLogin($this->store_customer);
 
@@ -215,9 +215,9 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
       '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
     ));
 
-    $this->assertRaw($message, t('Product was not added to wish list.'));
+    $this->assertRaw($message, t('Product was already in the wish list.'));
 
-    $this->drupalget('node/' . $this->product_node2->nid);
+    $this->drupalGet('node/' . $this->product_node2->nid);
 
     $this->assertRaw('Add to Wishlist');
 
