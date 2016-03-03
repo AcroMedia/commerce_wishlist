@@ -15,6 +15,6 @@
   </p>
 
   <p class="commerce-wishlist-share-url">
-    <?php print url('user/' . $account->uid . '/wishlist', array('absolute' => TRUE)); ?>
+    <?php print l(t("!user's wish list", array('!user' => format_username($account))), url('user/' . $account->uid . '/wishlist', array('absolute' => TRUE))); ?>
   </p>
 </div>

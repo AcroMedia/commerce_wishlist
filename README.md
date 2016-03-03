@@ -28,4 +28,3 @@ test blocks, rules, etc. as time allows.
 If you want to support multiple wishlists, you'll have to create your own
 views and create your own menu callbacks, but this should be fairly easy
 since most of the functions you need support specifying a wish list.
-

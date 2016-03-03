@@ -66,7 +66,7 @@ function commerce_wishlist_menu() {
 /**
  * Page callback for viewing a wish list.
  *
- * @param $user
+ * @param object $wishlist_user
  *   The user for which to show a wish list.
  *
  * @return mixed
@@ -174,7 +174,7 @@ function commerce_wishlist_theme($existing, $type, $theme, $path) {
       'variables' => array(
         'account' => NULL,
       ),
-    )
+    ),
   );
 }
 
@@ -405,9 +405,9 @@ function theme_commerce_wishlist_user_wishlist_page_title(&$variables) {
  *
  * @param object $account
  *   The account whose wishlist will be affected by some action. (e.g. viewed or
- *   updated.)
+ *   updated).
  * @param string $operation
- *   "view" or "update" based on the action.
+ *   One of "view" or "update" based on the action.
  * @param object|null $wishlist
  *   The wishlist to be affected. If the param is null, the default wishlist for
  *   a user will be loaded.
@@ -436,7 +436,7 @@ function commerce_wishlist_user_access($account, $operation, $wishlist = NULL) {
       return TRUE;
     }
     if (!is_object($wishlist)) {
-      if($wishlist = commerce_wishlist_order_load($account->uid) === FALSE) {
+      if ($wishlist = commerce_wishlist_order_load($account->uid) === FALSE) {
         return user_access('manage any wish list');
       }
     }
@@ -752,7 +752,8 @@ function commerce_wishlist_order_id($uid = 0) {
  * @param object $product
  *   The product entity being added to the wish list.
  * @param object|null $wishlist
- *   The wishlist it is being added to. Defaults to the user's primary wish list.
+ *   The wishlist it is being added to. Defaults to the user's primary wish
+ *   list.
  * @param int|null $uid
  *   The UID of the owner of the wish list. Defaults to the current user.
  * @param string $display_path
@@ -896,10 +897,10 @@ function commerce_wishlist_user_has_product_in_wishlist($product_id, $uid = NULL
  * commerce_wishlist_order_load(). If no account is provided, it will default to
  * the logged in user.
  *
- * @param object $product
- *   The product to remove.
- * @param int|null $account
- *   The account of the owner of the wish list.
+ * @param object $line_item
+ *   The product (line_item) to remove.
+ * @param object|null $account
+ *   The user object of the owner of the wish list.
  * @param object|null $wishlist
  *   The wishlist to remove the product from.
  */

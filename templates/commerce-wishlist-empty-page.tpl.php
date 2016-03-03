@@ -1,1 +1,11 @@
-Nothing in your wish list. To add some items, click on Add to Wishlist on a product page or listing.
+<?php
+
+/**
+ * @file
+ * Empty wish list page template.
+ *
+ * Available variables:
+ *   $account - The user account that the wishlist belongs to.
+ */
+?>
+Nothing in your wish list.
