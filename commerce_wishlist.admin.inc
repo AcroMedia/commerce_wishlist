@@ -27,7 +27,7 @@ function commerce_wishlist_admin_form($form, &$form_state) {
     '#type' => 'checkboxes',
     '#title' => t('Product types'),
     '#options' => commerce_product_type_options_list(),
-    '#description' => t('Enable "Add to wishlist" element for these product types. If none selected, all types will be allowed.'),
+    '#description' => t('Enable "Add to wishlist" element for these product types.'),
     '#default_value' => variable_get('commerce_wishlist_product_types', array()),
   );
 
