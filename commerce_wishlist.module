@@ -2,8 +2,20 @@
 
 /**
  * @file
- * Provides the wishlist for use in Drupal Commerce.
+ * Provides a wish list for use in Drupal Commerce.
  */
+
+/**
+ * The length of the hash that will be used for shared URLs.
+ */
+define('COMMERCE_WISHLIST_HASH_LENGTH', 8);
+
+/**
+ * Define wish list visibility states.
+ */
+define('COMMERCE_WISHLIST_VISIBILITY_PRIVATE', 0);
+define('COMMERCE_WISHLIST_VISIBILITY_PROTECTED', 1);
+define('COMMERCE_WISHLIST_VISIBILITY_PUBLIC', 2);
 
 /**
  * Implements hook_menu().
@@ -40,16 +52,12 @@ function commerce_wishlist_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['user/%user/wishlist'] = array(
-    'title' => 'User wishlist',
+    'title callback' => 'commerce_wishlist_view_user_wishlist_title',
+    'title arguments' => array(1),
     'page callback' => 'commerce_wishlist_view_user_wishlist',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'type' => MENU_LOCAL_TASK,
-  );
-  $sharing_url = variable_get('commerce_wishlist_share_prefix', 'wishlist') . '/%';
-  $items[$sharing_url] = array(
-    'title callback' => 'commerce_wishlist_remote_title',
-
   );
   $items['admin/commerce/config/wishlist'] = array(
     'title' => 'Wishlist configuration',
@@ -60,7 +68,54 @@ function commerce_wishlist_menu() {
     'file' => 'commerce_wishlist.admin.inc',
   );
 
+  // Set up our sharing URL here. This can be configurable. We default to
+  // shared-wishlist/%. The code will automatically find the '%' and set the
+  // correct argument.
+  $sharing_url = str_replace('%', '%commerce_wishlist_hash', variable_get('commerce_wishlist_share_prefix', 'shared-wishlist/%'));
+  $sharing_url_argument = (int) array_search('%commerce_wishlist_hash', explode('/', $sharing_url));
+  $items[$sharing_url] = array(
+    'title callback' => 'commerce_wishlist_shared_wishlist_title',
+    'title arguments' => array($sharing_url_argument),
+    'page callback' => 'commerce_wishlist_view_shared_user_wishlist',
+    'page arguments' => array($sharing_url_argument),
+    'access arguments' => array('access content'),
+  );
+
   return $items;
+}
+
+/**
+ * Generate a title for the shared wishlist page.
+ *
+ * @param object $wishlist
+ *   The wish list being displayed.
+ *
+ * @return string
+ *   The formatted title for the page. Usually includes the user's name.
+ */
+function commerce_wishlist_shared_wishlist_title($wishlist) {
+  $user = user_load($wishlist->uid);
+  return t("!username\'s wish list", array('!username' => format_username($user)));
+}
+
+/**
+ * Displayed a shared wishlist.
+ *
+ * @param object $wishlist
+ *   The wish list being displayed.
+ *
+ * @return string
+ *   The formatted output.
+ */
+function commerce_wishlist_view_shared_user_wishlist($wishlist) {
+  $wishlist_wrapper = entity_metadata_wrapper('commerce_order', $wishlist);
+  if (commerce_line_items_quantity($wishlist_wrapper->commerce_line_items, commerce_product_line_item_types()) > 0) {
+    // Return the wishlist page.
+    return commerce_embed_view('commerce_wishlist_page', 'default', array($wishlist->order_id));
+  }
+
+  // Page is empty.
+  return theme('commerce_wishlist_empty_page', array('account' => user_load($wishlist->uid)));
 }
 
 /**
@@ -96,10 +151,33 @@ function commerce_wishlist_view_user_wishlist($wishlist_user) {
 }
 
 /**
+ * Create the title for the wish list page.
+ *
+ * @param object $wishlist_user
+ *   The owner of the wish list.
+ *
+ * @return string
+ *    The title for the wish list.
+ */
+function commerce_wishlist_view_user_wishlist_title($wishlist_user) {
+  global $user;
+
+  if ($user->uid != $wishlist_user->uid) {
+    return t("!user's wish list", array('!user' => format_username($wishlist_user)));
+  }
+  else {
+    return t('Wish list');
+  }
+}
+
+/**
  * Helper function to determine a wishlist's usability.
  */
 function commerce_wishlist_is_public($wishlist) {
-  return TRUE;
+  if ($wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0] == '2') {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
@@ -183,6 +261,12 @@ function commerce_wishlist_theme($existing, $type, $theme, $path) {
  */
 function commerce_wishlist_form_alter(&$form, &$form_state, $form_id) {
   global $user;
+
+  if ($form_id == 'commerce_order_ui_order_form') {
+    if (!commerce_wishlist_order_is_wishlist($form_state['commerce_order'])) {
+      $form['commerce_wishlist_visibility']['#access'] = FALSE;
+    }
+  }
 
   if (strstr($form_id, 'commerce_cart_add_to_cart_form')) {
     // Check if the product is disabled.
@@ -318,20 +402,103 @@ function commerce_wishlist_block_view($delta = '') {
   switch ($delta) {
     case 'share':
       $wishlist_user = menu_get_object('user');
+      $wishlist = commerce_wishlist_order_load($wishlist_user->uid);
 
-      // @todo: Provide a better way of performing access checks like these.
-      if ($wishlist_user && $wishlist_user->uid == $user->uid && user_access('manage own wish list')) {
+      if (commerce_wishlist_user_access($user, 'update', $wishlist)) {
         $block['subject'] = t('Share My Wishlist');
-        $block['content'] = array(
-          '#theme' => 'commerce_wishlist_share_wishlist',
-          '#account' => $user,
-        );
+        $block['content'] = drupal_get_form('commerce_wishlist_share', $wishlist);
       }
 
       break;
   }
 
   return $block;
+}
+
+/**
+ * Form callback: Wishlist sharing.
+ */
+function commerce_wishlist_share($form, &$form_state, $wishlist) {
+  $form_state['wishlist'] = $wishlist;
+
+  $state = $wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'];
+  $account = user_load($wishlist->uid);
+
+  $form = array();
+
+  switch ($state) {
+    // Private visibility.
+    case COMMERCE_WISHLIST_VISIBILITY_PRIVATE:
+      $form['message'] = array(
+        '#markup' => t('Your wish list is private and can only be viewed by you.'),
+      );
+      break;
+
+    // Protected visibility.
+    case COMMERCE_WISHLIST_VISIBILITY_PROTECTED:
+      $form['message'] = array(
+        '#markup' => t('Your wish list is protected and can be viewed only by visiting this URL: !url', array(
+          '!url' => l(t("!user's wish list", array('!user' => format_username($account))), url(commerce_wishlist_get_wishlist_url($wishlist), array('absolute' => TRUE))),
+        )),
+      );
+      break;
+
+    // Public visibility.
+    case COMMERCE_WISHLIST_VISIBILITY_PUBLIC:
+      $form['message'] = array(
+        '#markup' => t('Your wish list is public and can be viewed by everyone.'),
+      );
+  }
+
+  $form['message']['#weight'] = -10;
+
+  field_attach_form('commerce_order', $wishlist, $form, $form_state, NULL, array(
+    'field_name' => 'commerce_wishlist_visibility',
+  ));
+
+  $form['commerce_wishlist_visibility'][LANGUAGE_NONE]['#title'] = t('Set wish list to');
+  unset($form['commerce_wishlist_visibility'][LANGUAGE_NONE]['#description']);
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+  );
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler: sharing options.
+ */
+function commerce_wishlist_share_submit($form, &$form_state) {
+  $wishlist = &$form_state['wishlist'];
+
+  $previous_state = $wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'];
+  field_attach_submit('commerce_order', $wishlist, $form, $form_state);
+  $new_state = $wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'];
+
+  // If the state has changed, we need to update the URL.
+  if ($previous_state != $new_state) {
+    switch ($new_state) {
+      // Private visibility. Note that we're not removing the "Protected" if the
+      // visibility transitions to public, since we wouldn't want to break it.
+      case COMMERCE_WISHLIST_VISIBILITY_PRIVATE:
+        // Remove the existing wishlist URL.
+        commerce_wishlist_remove_wishlist_url($wishlist);
+        break;
+
+      case COMMERCE_WISHLIST_VISIBILITY_PROTECTED:
+        // Create or replace the existing URL.
+        commerce_wishlist_add_wishlist_url($wishlist);
+
+    }
+  }
+
+  commerce_order_save($form_state['wishlist']);
 }
 
 /**
@@ -425,7 +592,7 @@ function commerce_wishlist_user_access($account, $operation, $wishlist = NULL) {
   // Users can always view their own wish list. Or, a user can view any wish
   // list if they have the correct permission.
   if ($operation == 'view') {
-    if ($user->uid == $account->uid || user_access('view any wish list') || user_access('administer wish lists', $user) || commerce_wishlist_is_public($wishlist)) {
+    if ((!empty($wishlist->uid) && $account->uid == $wishlist->uid) || user_access('view any wish list') || user_access('administer wish lists', $user) || commerce_wishlist_is_public($wishlist)) {
       return TRUE;
     }
     return FALSE;
@@ -979,4 +1146,121 @@ function commerce_wishlist_product_remove($product, $account = NULL, $wishlist =
   commerce_entity_reference_delete($wishlist, 'commerce_line_items', 'line_item_id', $line_item->line_item_id);
   commerce_line_item_delete($line_item->line_item_id);
   commerce_order_save($wishlist);
+}
+
+/**
+ * Return a wish list for a given hash.
+ *
+ * @param string $hash
+ *   The hash to load.
+ *
+ * @return bool|mixed
+ *   FALSE if no wish list was found, otherwise the commerce order object.
+ */
+function commerce_wishlist_hash_load($hash) {
+  $wishlist_id = db_select('commerce_wishlist_share', 'cws')
+    ->fields('cws', array('order_id'))
+    ->condition('url_hash', $hash)
+    ->execute()
+    ->fetchField();
+
+  if (!empty($wishlist_id)) {
+    return commerce_order_load($wishlist_id);
+  }
+
+  return FALSE;
+}
+
+/**
+ * Create and store a shareable URL for a given wish list.
+ *
+ * This function will create and store a wish list for a given wish list. It
+ * technically guarantees to create a unique URL for a given wish list with
+ * roughly 2 trillion possibilities.
+ *
+ * @param object $wishlist
+ *   The wish list object.
+ */
+function commerce_wishlist_add_wishlist_url($wishlist) {
+  // Remove if there already is one.
+  commerce_wishlist_remove_wishlist_url($wishlist);
+
+  // Avoid collisions.
+  do {
+    $hash_to_use = commerce_wishlist_generate_url_hash($wishlist);
+  } while (commerce_wishlist_hash_load($hash_to_use) !== FALSE);
+
+  db_insert('commerce_wishlist_share')
+    ->fields(array(
+      'order_id' => $wishlist->order_id,
+      'url_hash' => $hash_to_use,
+    ))
+    ->execute();
+
+  $url_hashes = &drupal_static('commerce_wishlist_order_hashes', array());
+  $url_hashes[$wishlist->order_id] = $hash_to_use;
+}
+
+/**
+ * Remove a wish list's shareable hash.
+ *
+ * @param object $wishlist
+ *   The wish list to have it's URL removed.
+ */
+function commerce_wishlist_remove_wishlist_url($wishlist) {
+  db_delete('commerce_wishlist_share')
+    ->condition('order_id', $wishlist->order_id)
+    ->execute();
+}
+
+/**
+ * Returns a shareable URL for a given wish list.
+ *
+ * @param object $wishlist
+ *   The wish list object.
+ *
+ * @return string
+ *   The shareable URL for the wishlist which uses the hash.
+ */
+function commerce_wishlist_get_wishlist_url($wishlist) {
+  $url_hashes = &drupal_static('commerce_wishlist_order_hashes', array());
+
+  if (empty($url_hashes[$wishlist->order_id])) {
+    $result = db_select('commerce_wishlist_share', 'cws')
+      ->fields('cws', array('url_hash'))
+      ->condition('order_id', $wishlist->order_id)
+      ->execute();
+
+    $url_hash = $result->fetchField(0);
+    $url_hashes[$wishlist->order_id] = $url_hash;
+  }
+  else {
+    $url_hash = $url_hashes[$wishlist->order_id];
+  }
+
+  if ($url_hash == '') {
+    return '';
+  }
+
+  $wishlist_url = str_replace('%', '%commerce_wishlist_hash', variable_get('commerce_wishlist_share_prefix', 'shared-wishlist/%'));
+  return url(str_replace('%commerce_wishlist_hash', $url_hash, $wishlist_url));
+}
+
+/**
+ * Generate a short URL "hash" for a given wish list.
+ *
+ * @param object $wishlist
+ *   The wish list object.
+ *
+ * @return string
+ *   A hash of 8 characters, in base36. Not guaranteed to be unique.
+ */
+function commerce_wishlist_generate_url_hash($wishlist) {
+  return substr(base_convert(hash('sha256', serialize(array(
+    $wishlist->order_id,
+    $wishlist->mail,
+    $wishlist->created,
+    $wishlist->changed,
+    time(),
+  ))), 16, 36), 0, COMMERCE_WISHLIST_HASH_LENGTH);
 }

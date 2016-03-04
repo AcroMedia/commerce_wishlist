@@ -1,7 +1,12 @@
 <?php
 
 /**
- * Base class for commerce discount tests.
+ * @file
+ * Tests for Commerce Wishlist.
+ */
+
+/**
+ * Base class for commerce wishlist tests.
  */
 class CommerceWishlistTestBase extends CommerceBaseTestCase {
 
@@ -14,22 +19,22 @@ class CommerceWishlistTestBase extends CommerceBaseTestCase {
    * Dummy commerce_product and related product node.
    */
   protected $product;
-  protected $product_node;
+  protected $productNode;
   protected $product2;
-  protected $product_node2;
+  protected $productNode2;
 
   /**
    * User accounts for testing.
    */
-  protected $store_admin;
-  protected $store_customer;
+  protected $storeAdmin;
+  protected $storeCustomer;
 
   /**
    * Allows submodules to define themselves for setup.
    *
    * @var string
    */
-  protected $sub_module;
+  protected $subModule;
 
   /**
    * Overrides CommerceBaseTestCase::permissionBuilder().
@@ -41,9 +46,11 @@ class CommerceWishlistTestBase extends CommerceBaseTestCase {
       case 'store admin':
         $permissions[] = 'configure wish lists';
         break;
+
       case 'store customer':
         $permissions[] = 'manage own wish list';
         break;
+
     }
 
     return $permissions;
@@ -61,8 +68,8 @@ class CommerceWishlistTestBase extends CommerceBaseTestCase {
     parent::setUp($modules);
 
     // User creation for different operations.
-    $this->store_admin = $this->createStoreAdmin();
-    $this->store_customer = $this->createStoreCustomer();
+    $this->storeAdmin = $this->createStoreAdmin();
+    $this->storeCustomer = $this->createStoreCustomer();
 
     // Create a dummy product.
     $this->product = $this->createDummyProduct('PROD-01', 'Product One', 1000);
@@ -72,11 +79,11 @@ class CommerceWishlistTestBase extends CommerceBaseTestCase {
     $this->createDummyProductDisplayContentType();
 
     // Create a product display node.
-    $this->product_node = $this->createDummyProductNode(array(
+    $this->productNode = $this->createDummyProductNode(array(
       $this->product->product_id,
     ), 'Product One node');
 
-    $this->product_node2 = $this->createDummyProductNode(array(
+    $this->productNode2 = $this->createDummyProductNode(array(
       $this->product2->product_id,
     ), 'Product Two node');
 
@@ -108,47 +115,47 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
   /**
    * Access to Commerce wish list admin.
    */
-  public function testCommerceWishlistUI() {
+  public function testCommerceWishlistUi() {
     // Login with store admin.
-    $this->drupalLogin($this->store_admin);
+    $this->drupalLogin($this->storeAdmin);
     // Check the access to the profiles listing.
     $this->drupalGet('admin/commerce/config/wishlist');
     $this->assertResponse(200, 'The store admin has access to wish list configuration.');
 
     // Login with customer.
-    $this->drupalLogin($this->store_customer);
+    $this->drupalLogin($this->storeCustomer);
     // Check the access to the profiles listing.
     $this->drupalGet('admin/commerce/config/wishlist');
     $this->assertResponse(403, 'The store customer has no access to wish list configuration.');
 
     // Test the UI.
-    $this->drupalGet('user/' . $this->store_customer->uid . '/wishlist');
+    $this->drupalGet('user/' . $this->storeCustomer->uid . '/wishlist');
     $this->assertResponse(200, 'The customer can access the wish list view.');
     $this->assertText('Nothing in your wish list.');
 
     // Load a product page.
-    $this->drupalGet('node/' . $this->product_node->uid);
+    $this->drupalGet('node/' . $this->productNode->uid);
     // Make sure Add to Wishlist is on the page.
     $this->assertRaw('Add to Wishlist');
     // Submit the button.
-    $this->drupalPost('node/' . $this->product_node->uid, array(), t('Add to Wishlist'));
+    $this->drupalPost('node/' . $this->productNode->uid, array(), t('Add to Wishlist'));
     // Upon refresh, the item should be in our wishlist.
     $this->assertText('Already in your wish list.');
     // Make sure our message shows up.
     $this->assertRaw(t('Product <em>@product</em> has been added to <a href="@url">your wish list</a>.', array(
       '@product' => $this->product->title,
-      '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
+      '@url' => url('user/' . $this->storeCustomer->uid . '/wishlist', array('absolute' => TRUE)),
     )), 'Added to wish list message is present.');
 
     // Make sure the product is actually in the cart.
-    $this->drupalGet('user/' . $this->store_customer->uid . '/wishlist');
+    $this->drupalGet('user/' . $this->storeCustomer->uid . '/wishlist');
     // Our remove link.
     $this->assertLink('Remove');
     // This form shouldn't have any form elements in it.
     $this->assertNoText('Already in your wishlist.', 'Wish list form elements are not present.');
     // Our product, linked to it's node, should be visible.
     $this->assertLink($this->product->title);
-    $this->assertRaw(l($this->product->title, 'node/' . $this->product_node->nid), 'Item links to the original node.');
+    $this->assertRaw(l($this->product->title, 'node/' . $this->productNode->nid), 'Item links to the original node.');
 
     // Remove it from the wishlist.
     $this->clickLink('Remove');
@@ -159,10 +166,10 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
   /**
    * Anonymous usage of the Wish list module.
    */
-  public function testCommerceWishlistAnonymousUI() {
+  public function testCommerceWishlistAnonymousUi() {
     $this->drupalLogout();
     // Load a product page.
-    $this->drupalGet('node/' . $this->product_node->nid);
+    $this->drupalGet('node/' . $this->productNode->nid);
     // Make sure Add to Wishlist is on the page.
     $this->assertRaw('Add to Wishlist');
     // Submit the button.
@@ -171,19 +178,18 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     );
     $this->drupalPost($this->getUrl(), $edit, t('Add to Wishlist'));
 
-    $message = t('Please <a href="@login">log in</a> or <a href="@register">register</a> to add this product to your wish list.',
-      array(
-        '@login' => url('user/login', array('query' => array('destination' => 'node/1'))),
-        '@register' => url('user/register'),
-      )
-    );
-      $this->assertRaw($message, t('Error adding to wish list displayed.'));
+    $message = t('Please <a href="@login">log in</a> or <a href="@register">register</a> to add this product to your wish list.', array(
+      '@login' => url('user/login', array('query' => array('destination' => 'node/1'))),
+      '@register' => url('user/register'),
+    ));
 
-    $this->drupalLogin($this->store_customer);
+    $this->assertRaw($message, t('Error adding to wish list displayed.'));
+
+    $this->drupalLogin($this->storeCustomer);
 
     $message = t('Product <em>@product</em> has been added to <a href="@url">your wish list</a>.', array(
       '@product' => $this->product->title,
-      '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
+      '@url' => url('user/' . $this->storeCustomer->uid . '/wishlist', array('absolute' => TRUE)),
     ));
 
     $this->assertRaw($message, t('Product added to wish list after login.'));
@@ -191,7 +197,7 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     $this->drupalLogout();
 
     // Check to see if the error will show when we try to add it again.
-    $this->drupalGet('node/' . $this->product_node->uid);
+    $this->drupalGet('node/' . $this->productNode->uid);
     // Make sure Add to Wishlist is on the page.
     $this->assertRaw('Add to Wishlist');
     // Submit the button.
@@ -208,16 +214,16 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     );
     $this->assertRaw($message, t('Error adding to wish list displayed.'));
 
-    $this->drupalLogin($this->store_customer);
+    $this->drupalLogin($this->storeCustomer);
 
     $message = t('Product <em>@product</em> was already in <a href="@url">your wish list</a>.', array(
       '@product' => $this->product->title,
-      '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
+      '@url' => url('user/' . $this->storeCustomer->uid . '/wishlist', array('absolute' => TRUE)),
     ));
 
     $this->assertRaw($message, t('Product was already in the wish list.'));
 
-    $this->drupalGet('node/' . $this->product_node2->nid);
+    $this->drupalGet('node/' . $this->productNode2->nid);
 
     $this->assertRaw('Add to Wishlist');
 
@@ -228,12 +234,12 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
 
     $message = t('Product <em>@product</em> has been added to <a href="@url">your wish list</a>.', array(
       '@product' => $this->product2->title,
-      '@url' => url('user/' . $this->store_customer->uid . '/wishlist', array('absolute' => TRUE)),
+      '@url' => url('user/' . $this->storeCustomer->uid . '/wishlist', array('absolute' => TRUE)),
     ));
 
     $this->assertRaw($message, t('Product added to wish list after login.'));
 
-    $this->drupalGet('user/' . $this->store_customer->uid . '/wishlist');
+    $this->drupalGet('user/' . $this->storeCustomer->uid . '/wishlist');
 
     $this->assertText('Product One', t('Product one is listed.'));
     $this->assertText('Product Two', t('Product two is listed.'));
