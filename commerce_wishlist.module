@@ -95,7 +95,7 @@ function commerce_wishlist_menu() {
  */
 function commerce_wishlist_shared_wishlist_title($wishlist) {
   $user = user_load($wishlist->uid);
-  return t("!username\'s wish list", array('!username' => format_username($user)));
+  return t("!username's wish list", array('!username' => format_username($user)));
 }
 
 /**
