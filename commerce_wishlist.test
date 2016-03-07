@@ -114,6 +114,16 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
   }
 
   /**
+   * Test core commerce items.
+   */
+  public function testCommerceWishlistCore() {
+    $states = commerce_order_states();
+    $this->assertTrue(!empty($states['wishlist']), t('Wish list order state exists.'));
+    $statuses = commerce_order_statuses();
+    $this->assertTrue(!empty($statuses['wishlist']), t('Wish list order status exists.'));
+  }
+
+  /**
    * Access to Commerce wish list admin.
    */
   public function testCommerceWishlistUi() {
@@ -122,6 +132,9 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     // Check the access to the profiles listing.
     $this->drupalGet('admin/commerce/config/wishlist');
     $this->assertResponse(200, 'The store admin has access to wish list configuration.');
+    $this->assertField('commerce_wishlist_weight', t('Weight field exists.'));
+    $this->assertField('commerce_wishlist_element', t('Element field exists.'));
+    $this->assertField('commerce_wishlist_product_types[product]', t('Product type checkbox exists.'));
 
     // Login with customer.
     $this->drupalLogin($this->storeCustomer);

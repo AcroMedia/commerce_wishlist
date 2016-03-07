@@ -132,7 +132,8 @@ function commerce_wishlist_view_user_wishlist($wishlist_user) {
   // Get the default wishlist.
   $wishlist = commerce_wishlist_order_load($wishlist_user->uid);
 
-  // Can this user view the wish list?
+  // Can this user view the wish list? Also, allow a user if there is no wish
+  // list defined but the logged in user is the one accessing the page.
   if (!commerce_wishlist_user_access($user, 'view', $wishlist) && !empty($wishlist) && $user->uid != $wishlist_user->uid) {
     return MENU_ACCESS_DENIED;
   }
