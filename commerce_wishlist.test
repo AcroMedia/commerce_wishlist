@@ -295,8 +295,6 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     $elements = $this->xpath('//a[contains(@href, "shared-wishlist")]/@href');
     $this->assertEqual($elements, array(), t('No shared link on the page.'));
 
-    cache_clear_all('*', 'cache_page', TRUE);
-
     // Log out and test our wish list.
     $this->drupalLogout();
     $this->drupalGet($wishlist_path);
@@ -330,9 +328,9 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
 
     // Set the protected path.
     $this->drupalGet($protected_path);
-    $this->assertNoResponse(404, t('Protected wish list URL inaccessible now that it is private.'));
+    $this->assertResponse(404, t('Protected wish list URL inaccessible now that it is private.'));
     $this->assertNoText(t('Product One'), t('Product is not visible.'));
     $this->assertNoText(t('Product Two'), t('Product is not visible.'));
   }
-  
+
 }

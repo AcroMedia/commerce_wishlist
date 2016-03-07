@@ -133,7 +133,7 @@ function commerce_wishlist_view_user_wishlist($wishlist_user) {
   $wishlist = commerce_wishlist_order_load($wishlist_user->uid);
 
   // Can this user view the wish list?
-  if (!commerce_wishlist_user_access($user, 'view', $wishlist)) {
+  if (!commerce_wishlist_user_access($user, 'view', $wishlist) && !empty($wishlist) && $user->uid != $wishlist_user->uid) {
     return MENU_ACCESS_DENIED;
   }
 
@@ -174,7 +174,8 @@ function commerce_wishlist_view_user_wishlist_title($wishlist_user) {
  * Helper function to determine a wishlist's usability.
  */
 function commerce_wishlist_is_public($wishlist) {
-  if ($wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'] == '2') {
+  if (!empty($wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'])
+      && $wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'] == '2') {
     return TRUE;
   }
   return FALSE;
@@ -406,7 +407,7 @@ function commerce_wishlist_block_view($delta = '') {
       $wishlist_user = menu_get_object('user');
       $wishlist = commerce_wishlist_order_load($wishlist_user->uid);
 
-      if (commerce_wishlist_user_access($user, 'update', $wishlist)) {
+      if (!empty($wishlist) && commerce_wishlist_user_access($user, 'update', $wishlist)) {
         $block['subject'] = t('Share my wish list');
         $block['content'] = drupal_get_form('commerce_wishlist_share', $wishlist);
       }
@@ -594,7 +595,7 @@ function commerce_wishlist_user_access($account, $operation, $wishlist = NULL) {
   // Users can always view their own wish list. Or, a user can view any wish
   // list if they have the correct permission.
   if ($operation == 'view') {
-    if ((!empty($wishlist->uid) && $account->uid == $wishlist->uid) || user_access('view any wish list', $user) || user_access('administer wish lists', $user) || commerce_wishlist_is_public($wishlist)) {
+    if ((!empty($wishlist->uid) && $account->uid == $wishlist->uid) || (empty($wishlist) && $account->uid == $user->uid) || user_access('view any wish list', $user) || user_access('administer wish lists', $user) || commerce_wishlist_is_public($wishlist)) {
       return TRUE;
     }
     return FALSE;
