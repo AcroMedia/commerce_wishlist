@@ -30,7 +30,7 @@ class CommerceWishlistTestBase extends CommerceBaseTestCase {
   protected $storeCustomer;
 
   /**
-   * Allows submodules to define themselves for setup.
+   * Allows sub-modules to define themselves for setup.
    *
    * @var string
    */
@@ -63,6 +63,7 @@ class CommerceWishlistTestBase extends CommerceBaseTestCase {
     // Enable all commerce modules + commerce_wishlist.
     $modules = parent::setUpHelper('all');
 
+    $modules[] = 'list';
     $modules[] = 'commerce_wishlist';
 
     parent::setUp($modules);
@@ -245,4 +246,93 @@ class CommerceWishlistTest extends CommerceWishlistTestBase {
     $this->assertText('Product Two', t('Product two is listed.'));
   }
 
+  public function testCommerceWishlistSharing() {
+    // Sets a standard path.
+    $wishlist_path = 'user/' . $this->storeCustomer->uid . '/wishlist';
+
+    // Create a wishlist for a store customer test.
+    $wishlist = commerce_wishlist_order_new($this->storeCustomer->uid);
+    commerce_wishlist_product_add($this->product, $wishlist, $this->storeCustomer->uid);
+    commerce_wishlist_product_add($this->product2, $wishlist, $this->storeCustomer->uid);
+
+    $this->drupalGet($wishlist_path);
+    $this->assertResponse(403, t('Wishlist is unavailable to the public.'));
+
+    // Log in with the wishlist user.
+    $this->drupalLogin($this->storeCustomer);
+
+    // Load the wish list page.
+    $this->drupalGet($wishlist_path);
+    $this->assertResponse(200, t('Wishlist is available to the customer.'));
+    $this->drupalGet($wishlist_path);
+    $this->assertText(t('Share my wish list'), t('Wish list sharing block is on the wish list page.'));
+    $this->assertText(t('Your wish list is private and can only be viewed by you.'), t('Wish list is private by default.'));
+    $this->assertField('commerce_wishlist_visibility[und]', t('Wish list sharing field is visible.'));
+
+    // Set our wish list to protected.
+    $this->drupalPost($wishlist_path, array('commerce_wishlist_visibility[und]' => 1), t('Save'));
+    $this->assertField('commerce_wishlist_visibility[und]', t('Wish list sharing field is visible.'));
+    $this->assertText(t('Your wish list is protected and can be viewed only by visiting this URL'), t('Wish list protected message shows up.'));
+    $elements = $this->xpath('//a[contains(@href, "shared-wishlist")]/@href');
+    $protected_path = (string) $elements[0];
+
+    // Make sure that it can't be accessed except by the special URL.
+    $this->drupalLogout();
+    $this->drupalGet($wishlist_path);
+    $this->assertResponse(403, t('Protected wishlist is not publicly accessible.'));
+    $this->drupalGet($protected_path);
+    $this->assertNoField('commerce_wishlist_visibility[und]', t('Wish list sharing field is hidden.'));
+    $this->assertResponse(200, t('Protected wish list URL works.'));
+    $this->assertText(t('Product One'), t('Product is visible.'));
+    $this->assertText(t('Product Two'), t('Product is visible.'));
+
+    // Change to public.
+    $this->drupalLogin($this->storeCustomer);
+    $this->drupalGet($wishlist_path);
+    $this->drupalPost($wishlist_path, array('commerce_wishlist_visibility[und]' => 2), t('Save'));
+    $this->assertField('commerce_wishlist_visibility[und]', t('Wish list sharing field is visible.'));
+    $this->assertText(t('Your wish list is public and can be viewed by everyone.'), t('Wish list public message shows up.'));
+    $elements = $this->xpath('//a[contains(@href, "shared-wishlist")]/@href');
+    $this->assertEqual($elements, array(), t('No shared link on the page.'));
+
+    cache_clear_all('*', 'cache_page', TRUE);
+
+    // Log out and test our wish list.
+    $this->drupalLogout();
+    $this->drupalGet($wishlist_path);
+    $this->assertResponse(200, t('Wish list accessible on usual URL to anonymous user.'));
+    $this->assertText(t('Product One'), t('Product is visible.'));
+    $this->assertText(t('Product Two'), t('Product is visible.'));
+    $this->assertNoField('commerce_wishlist_visibility[und]', t('Wish list sharing field is hidden.'));
+
+    // Set the protected path.
+    $this->drupalGet($protected_path);
+    $this->assertResponse(200, t('Protected wish list URL works still works while public.'));
+    $this->assertText(t('Product One'), t('Product is visible.'));
+    $this->assertText(t('Product Two'), t('Product is visible.'));
+
+    // Change to back to private.
+    $this->drupalLogin($this->storeCustomer);
+    $this->drupalGet($wishlist_path);
+    $this->assertField('commerce_wishlist_visibility[und]', t('Wish list sharing field is visible.'));
+    $this->drupalPost($wishlist_path, array('commerce_wishlist_visibility[und]' => 0), t('Save'));
+    $this->assertText(t('Your wish list is private and can only be viewed by you.'), t('Wish list is private.'));
+    $elements = $this->xpath('//a[contains(@href, "shared-wishlist")]/@href');
+    $this->assertEqual($elements, array(), t('No shared link on the page.'));
+
+    // Log out and test the URLs one more time.
+    $this->drupalLogout();
+    $this->drupalGet($wishlist_path);
+    $this->assertResponse(403, t('Wish list inaccessible on user path.'));
+    $this->assertNoText(t('Product One'), t('Product is not visible.'));
+    $this->assertNoText(t('Product Two'), t('Product is not visible.'));
+    $this->assertNoField('commerce_wishlist_visibility[und]', t('Wish list sharing field is hidden.'));
+
+    // Set the protected path.
+    $this->drupalGet($protected_path);
+    $this->assertNoResponse(404, t('Protected wish list URL inaccessible now that it is private.'));
+    $this->assertNoText(t('Product One'), t('Product is not visible.'));
+    $this->assertNoText(t('Product Two'), t('Product is not visible.'));
+  }
+  
 }
