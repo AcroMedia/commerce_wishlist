@@ -197,7 +197,7 @@ function commerce_wishlist_upgrade_from_1x_to_3x(&$sandbox) {
       $uid = $user->uid;
 
       $wishlist_products = db_select('commerce_wishlist', 'cw')
-        ->fields('cw', array('nid', 'product_id', 'quantity'))
+        ->fields('cw')
         ->condition('uid', $uid)
         ->execute();
 
@@ -208,7 +208,7 @@ function commerce_wishlist_upgrade_from_1x_to_3x(&$sandbox) {
 
         $line_item = commerce_product_line_item_new($product);
         $line_item->created = time();
-        $line_item->quantity = $wishlist_product->quantity > 1 ? $wishlist_product->quantity : 1;
+        $line_item->quantity = !empty($wishlist_product->quantity) ? (int) $wishlist_product->quantity : 1;
         $line_item->commerce_display_path[LANGUAGE_NONE][0] = array('value' => 'node/' . $wishlist_product->nid);
 
         // Set the incoming line item's order_id.
