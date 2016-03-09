@@ -168,6 +168,8 @@ function commerce_wishlist_uninstall() {
   variable_del('commerce_wishlist_element');
   variable_del('commerce_wishlist_product_types');
   variable_del('commerce_wishlist_weight');
+
+  field_delete_field('commerce_wishlist_visibility');
 }
 
 /**

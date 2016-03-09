@@ -1,5 +1,5 @@
-name = Commerce Wishlist
-description = Allows users to create public product wishlists.
+name = Commerce Wish list
+description = Allows users to create public product wish lists.
 package = Commerce (contrib)
 dependencies[] = commerce
 dependencies[] = commerce_product
