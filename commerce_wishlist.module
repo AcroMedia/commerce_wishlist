@@ -425,7 +425,7 @@ function commerce_wishlist_block_view($delta = '') {
 function commerce_wishlist_share($form, &$form_state, $wishlist) {
   $form_state['wishlist'] = $wishlist;
 
-  $state = $wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'];
+  $state = empty($wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value']) ? 0 : $wishlist->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'];;
   $account = user_load($wishlist->uid);
 
   $form = array();
@@ -989,12 +989,15 @@ function commerce_wishlist_product_add($product, $wishlist = NULL, $uid = NULL, 
  *   The order type to create. Defaults to 'commerce_order'.
  *
  * @return object
- *   The new commerce order.
+ *   The new commerce order. It's visibility will be set to private.
  */
 function commerce_wishlist_order_new($uid, $type = 'commerce_order') {
   // Create the new order with the customer's uid and the cart order status.
   $order = commerce_order_new($uid, 'wishlist', $type);
   $order->log = t('Created a new wishlist order.');
+
+  // Save all wishlist as private by default.
+  $order->commerce_wishlist_visibility[LANGUAGE_NONE][0]['value'] = COMMERCE_WISHLIST_VISIBILITY_PRIVATE;
 
   // Save it so it gets an order ID and return the full object.
   commerce_order_save($order);

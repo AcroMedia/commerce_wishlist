@@ -20,6 +20,8 @@ function commerce_wishlist_install() {
  * Convert wish lists to use orders.
  */
 function commerce_wishlist_update_7300(&$sandbox) {
+  commerce_wishlist_create_visibility_field();
+
   if (db_table_exists('commerce_wishlist')) {
     if (db_table_exists('commerce_wishlist_item')) {
       commerce_wishlist_upgrade_from_2x_to_3x($sandbox);
@@ -35,7 +37,7 @@ function commerce_wishlist_update_7300(&$sandbox) {
  */
 function commerce_wishlist_update_7301() {
   // Present on both 1.x and 2.x.
-//  db_drop_table('commerce_wishlist');
+  db_drop_table('commerce_wishlist');
 
   // 1.x will not have this table.
   if (db_table_exists('commerce_wishlist_item')) {
@@ -55,73 +57,77 @@ function commerce_wishlist_update_7302() {
  */
 function commerce_wishlist_create_visibility_field() {
   // Create our visibility field.
-  field_create_field(array(
-    'translatable' => '0',
-    'entity_types' => array(),
-    'settings' => array(
-      'allowed_values' => array(
-        0 => 'Private',
-        1 => 'Protected',
-        2 => 'Public',
+  if (!field_info_field('commerce_wishlist_visibility')) {
+    field_create_field(array(
+      'translatable' => '0',
+      'entity_types' => array(),
+      'settings' => array(
+        'allowed_values' => array(
+          0 => 'Private',
+          1 => 'Protected',
+          2 => 'Public',
+        ),
+        'allowed_values_function' => '',
       ),
-      'allowed_values_function' => '',
-    ),
-    'foreign keys' => array(),
-    'indexes' => array(
-      'value' => array(
-        0 => 'value',
+      'foreign keys' => array(),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
       ),
-    ),
-    'field_name' => 'commerce_wishlist_visibility',
-    'type' => 'list_integer',
-    'module' => 'list',
-    'active' => '1',
-    'locked' => '0',
-    'cardinality' => '1',
-    'columns' => array(
-      'value' => array(
-        'type' => 'int',
-        'not null' => FALSE,
+      'field_name' => 'commerce_wishlist_visibility',
+      'type' => 'list_integer',
+      'module' => 'list',
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '1',
+      'columns' => array(
+        'value' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
       ),
-    ),
-    'bundles' => array(
-      'commerce_order' => array(
-        0 => 'commerce_order',
+      'bundles' => array(
+        'commerce_order' => array(
+          0 => 'commerce_order',
+        ),
       ),
-    ),
-  ));
+    ));
+  }
 
-  field_create_instance(array(
-    'label' => 'Wishlist visibility',
-    'widget' => array(
-      'weight' => '-10',
-      'type' => 'options_select',
-      'module' => 'options',
-      'active' => 1,
-      'settings' => array(),
-    ),
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'type' => 'hidden',
+  if (!field_info_instance('commerce_order', 'commerce_wishlist_visibility', 'commerce_order')) {
+    field_create_instance(array(
+      'label' => 'Wishlist visibility',
+      'widget' => array(
         'weight' => '-10',
+        'type' => 'options_select',
+        'module' => 'options',
+        'active' => 1,
         'settings' => array(),
       ),
-    ),
-    'required' => 1,
-    'description' => 'Public means that anyone can see it. Protected wish lists can be shared, but are only available via a special URL. Private wishlists are only accessible to the owner.',
-    'default_value' => array(
-      0 => array(
-        'value' => '0',
+      'settings' => array(
+        'user_register_form' => FALSE,
       ),
-    ),
-    'field_name' => 'commerce_wishlist_visibility',
-    'entity_type' => 'commerce_order',
-    'bundle' => 'commerce_order',
-  ));
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'type' => 'hidden',
+          'weight' => '-10',
+          'settings' => array(),
+        ),
+      ),
+      'required' => 1,
+      'description' => 'Public means that anyone can see it. Protected wish lists can be shared, but are only available via a special URL. Private wishlists are only accessible to the owner.',
+      'default_value' => array(
+        0 => array(
+          'value' => '0',
+        ),
+      ),
+      'field_name' => 'commerce_wishlist_visibility',
+      'entity_type' => 'commerce_order',
+      'bundle' => 'commerce_order',
+    ));
+  }
 }
 
 /**
@@ -195,12 +201,6 @@ function commerce_wishlist_upgrade_from_1x_to_3x(&$sandbox) {
         ->condition('uid', $uid)
         ->execute();
 
-      if (!$wishlist_products) {
-        $sandbox['progress']++;
-        $sandbox['current_uid'] = $uid;
-        continue;
-      }
-
       $wishlist_order = commerce_wishlist_order_new($uid);
 
       foreach ($wishlist_products as $wishlist_product) {
@@ -223,12 +223,14 @@ function commerce_wishlist_upgrade_from_1x_to_3x(&$sandbox) {
 
       // Save the updated order.
       commerce_order_save($wishlist_order);
+
+      $sandbox['progress']++;
+      $sandbox['current_uid'] = $uid;
     }
-    $sandbox['progress']++;
-    $sandbox['current_uid'] = $uid;
   }
   else {
     $sandbox['#finished'] = 1;
+    return;
   }
 
   $sandbox['#finished'] = empty($sandbox['total']) ? 1 : ($sandbox['progress'] / $sandbox['total']);
