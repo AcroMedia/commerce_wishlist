@@ -301,6 +301,7 @@ function commerce_wishlist_upgrade_from_2x_to_3x(&$sandbox) {
   }
   else {
     $sandbox['#finished'] = 1;
+    return;
   }
 
   $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
