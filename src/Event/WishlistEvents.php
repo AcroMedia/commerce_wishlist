@@ -31,7 +31,7 @@ final class WishlistEvents {
    *
    * @see \Drupal\commerce_wishlist\Event\WishlistEmptyEvent
    */
-  const WISHLIST_EMPTY = 'commerce_cart.cart.empty';
+  const WISHLIST_EMPTY = 'commerce_wishlist.wishlist.empty';
 
   /**
    * Name of the event fired after adding a purchasable entity to the wishlist.
@@ -77,6 +77,6 @@ final class WishlistEvents {
    *
    * @see \Drupal\commerce_wishlist\Event\LineItemComparisonFieldsEvent
    */
-  const LINE_ITEM_COMPARISON_FIELDS = 'commerce_cart.line_item.comparison_fields';
+  const LINE_ITEM_COMPARISON_FIELDS = 'commerce_wishlist.line_item.comparison_fields';
 
 }
