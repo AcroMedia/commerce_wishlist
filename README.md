@@ -25,17 +25,18 @@ items, the ability for the customers to create/modify those fields is likely not
   * As a **customer**, I can add a product to a wishlist.
   * As a **customer**, I can remove a product from a wishlist.
   * As a **customer**, I can change the quantity of a product on a wishlist.
-  * As a **customer**, I can add one or many products to my real cart.
-  * As a **customer**, I can move items from my cart to my wishlist.
+  * As a **customer**, I can add a product to my cart from my wislist.
+  * As a **customer**, I can move a product from my cart to my wishlist.
   * As a **customer**, I can view my wishlist.
     * A wishlist MAY be accessed by clicking a link from the user's account page.
 * **Administrators**
-  * As an **administrator**, I can choose which product types can be added to wishlists.
-  * As an **administrator**, I can choose which line item type will be used when adding products to wishlists.
   * As an **administrator**, I can control the position of the "Add to wishlist" button.
+    * The wishlist settings page MUST have a configurable weight integer.
+    * The weight integer MUST be used _globally_ to position the button above or below other form elements.
   * As an **administrator**, I can choose to display the "Add to wishlist" as a button or an AJAX link.
     * The button MUST reload the page by default.
     * The AJAX link MUST accomplish the same task without a page reload.
+  * As an **administrator**, I can add a "Move to wishlist" button to the cart view. 
 
 ## Backlogged User Stories
 
@@ -43,7 +44,7 @@ items, the ability for the customers to create/modify those fields is likely not
   * As an **anonymous user**, I can add a product to a wishlist.
   * As an **anonymous user**, I can remove a product from a wishlist.
   * As an **anonymous user**, I can change the quantity of a product on a wishlist.
-  * As an **anonymous user**, I can add one or many products to my real cart.
+  * As an **anonymous user**, I can add a product to my cart from my wislist.
   * As an **anonymous user**, I can move items from my cart to my wishlist.
   * As an **anonymous user**, I can register and my wishlist will be saved to my account.
   * As an **anonymous user**, I can login and my wishlist will be saved to my account.
@@ -53,14 +54,17 @@ items, the ability for the customers to create/modify those fields is likely not
   * As a **customer**, I can create, update, and delete wishlists.
     * A customer MUST have a "default" wishlist.
     * A wishlist MUST be created if none exists when adding the first product to a wishlist.
+    * A customer MAY provide a wishlist title.
   * As a **customer**, I can view a list of wishlists on my account page.
-  * As a **customer**, I can choose a wishlist before I click "Add to wishlist."
-  * As a **customer**, I can choose to add a product to a new wishlist from an add to cart form.
-  * As a **customer**, I can move products between lists.
-  * As a **customer**, I can choose to share a wishlist publicly.
+  * As a **customer**, I can select one of many wishlists before I click "Add to wishlist."
+  * As a **customer**, I can create a new wishlist while saving a product to it.
+  * As a **customer**, I can move products between wishlists.
+  * As a **customer**, I can share a wishlist.
+    * Sharing MAY be accessed with an unlisted url once a shared status has been set.
+    * Limited sharing with a passcode MAY be enabled.
   * As a **customer**, I will see products from my wishlist(s) in a block underneath the cart.
 * **Administrators**
-  * As an **administrator**, I can add editable line item fields to wishlist views.
+  * As an **administrator**, I can mark line item fields to be included as customer-editable on wishlists.
   * As an **administrator**, I can choose which order types are treated as wishlists.
   * As an **administrator**, I can add a link to the menu system that links to a customer's wishlist.
     * The link MUST be used as a menu link token in the form of `<wishlist-dashboard>` 
