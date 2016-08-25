@@ -1,6 +1,6 @@
 name: Commerce Wishlist
 type: module
-description: Creates an Amazon cart link for the cart block and page.
+description: Provides the ability for customers to add products to a list.
 package: Commerce (contrib)
 core: 8.x
 dependencies:
