@@ -44,7 +44,7 @@ class WishlistController extends ControllerBase {
       $build['empty'] = [
         '#prefix' => '<div class="wishlist-empty-page">',
         '#markup' => $this->t('Your wishlist is empty.'),
-        '#suffix' => '</div.',
+        '#suffix' => '</div>',
       ];
     // }
 
