@@ -5,11 +5,11 @@ namespace Drupal\commerce_wishlist;
 /**
  * Stores wishlist ids in the anonymous user's session.
  *
- * Allows the system to keep track of which cart orders belong to the anonymous
- * user. The session is the only available storage in this case, since all
- * anonymous users share the same user id (0).
+ * Allows the system to keep track of which wishlist orders belong to the
+ * anonymous user. The session is the only available storage in this case, since
+ * all anonymous users share the same user id (0).
  *
- * @see \Drupal\commerce_cart\CartProviderInterface
+ * @see \Drupal\commerce_wishlist\WishlistProviderInterface
  */
 interface WishlistSessionInterface {
 

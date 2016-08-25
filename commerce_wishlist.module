@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Implements the wishlist system and add to wishlist features.
+ */
+
+use Drupal\commerce_order\Entity\OrderInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function commerce_wishlist_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() === 'commerce_order') {
+    $fields['wishlist'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Wishlist'))
+      ->setSettings([
+        'on_label' => t('Yes'),
+        'off_label' => t('No'),
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'settings' => [
+          'display_label' => TRUE,
+        ],
+        'weight' => 20,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDefaultValue(FALSE);
+
+    return $fields;
+  }
+}
+
+/**
+ * Implements hook_entity_bundle_create().
+ *
+ * Creates an 'add_to_wishlist' form display for each new line item type.
+ *
+ * @todo: Determine if we need an add_to_wishlist display mode for line item
+ *        types.
+ */
+function commerce_wishlist_entity_bundle_create($entity_type_id, $bundle) {
+  if ($entity_type_id == 'commerce_line_item' && !\Drupal::isConfigSyncing()) {
+    $storage = \Drupal::entityTypeManager()->getStorage('entity_form_display');
+    $form_display = $storage->load('commerce_line_item.' . $bundle . '.add_to_wishlist');
+    if (!$form_display) {
+      /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display */
+      $form_display = $storage->create([
+        'targetEntityType' => 'commerce_line_item',
+        'bundle' => $bundle,
+        'mode' => 'add_to_wishlist',
+        'status' => TRUE,
+      ]);
+      // Hide the unit price by default.
+      $form_display->removeComponent('unit_price');
+      $form_display->save();
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function commerce_wishlist_entity_type_build(array &$entity_types) {
+  $entity_types['commerce_line_item']->setFormClass('add_to_wishlist', '\Drupal\commerce_wishlist\Form\AddToWishlistForm');
+}

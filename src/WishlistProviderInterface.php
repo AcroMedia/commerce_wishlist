@@ -10,6 +10,7 @@ use Drupal\Core\Session\AccountInterface;
  *
  * @see \Drupal\commerce_cart\CartProviderInterface
  * @see \Drupal\commerce_cart\CartSessionInterface
+ * @see \Drupal\commerce_wishlist\WishlistSessionInterface
  */
 interface WishlistProviderInterface {
 
@@ -27,7 +28,7 @@ interface WishlistProviderInterface {
    *   The created wishlist order.
    *
    * @throws \Drupal\commerce_wishlist\Exception\DuplicateWishlistException
-   *   When a cart with the given criteria already exists.
+   *   When a wishlist with the given criteria already exists.
    */
   public function createWishlist($order_type, StoreInterface $store, AccountInterface $account = NULL);
 
@@ -68,7 +69,7 @@ interface WishlistProviderInterface {
    *   The user. If empty, the current user is assumed.
    *
    * @return \Drupal\commerce_order\Entity\OrderInterface[]
-   *   A list of cart orders.
+   *   A list of wishlist orders.
    */
   public function getWishlists(AccountInterface $account = NULL);
 
