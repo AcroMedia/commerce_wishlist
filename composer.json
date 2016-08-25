@@ -1,5 +1,5 @@
 {
-  "name": "acromedia/commerce_wishlist",
+  "name": "drupal/commerce_wishlist",
   "type": "drupal-module",
   "description": "Provides the ability for customers to add products to a list.",
   "homepage": "https://www.drupal.org/project/commerce_wishlist",
