@@ -5,11 +5,11 @@ namespace Drupal\commerce_wishlist;
 use Drupal\commerce\PurchasableEntityInterface;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_order\Entity\LineItemInterface;
-use Drupal\commerce_cart\Event\CartEvents;
-use Drupal\commerce_cart\Event\CartEmptyEvent;
-use Drupal\commerce_cart\Event\CartEntityAddEvent;
-use Drupal\commerce_cart\Event\CartLineItemRemoveEvent;
-use Drupal\commerce_cart\Event\CartLineItemUpdateEvent;
+use Drupal\commerce_wishlist\Event\WishlistEvents;
+use Drupal\commerce_wishlist\Event\WishlistEmptyEvent;
+use Drupal\commerce_wishlist\Event\WishlistEntityAddEvent;
+use Drupal\commerce_wishlist\Event\WishlistLineItemRemoveEvent;
+use Drupal\commerce_wishlist\Event\WishlistLineItemUpdateEvent;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
