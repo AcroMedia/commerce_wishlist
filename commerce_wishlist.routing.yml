@@ -1,0 +1,7 @@
+commerce_wishlist.page:
+  path: '/wishlist'
+  defaults:
+    _controller: '\Drupal\commerce_wishlist\Controller\WishlistController::wishlistPage'
+    _title: 'Wishlist'
+  requirements:
+    _permission: 'access wishlist'
