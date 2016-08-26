@@ -39,7 +39,7 @@ interface WishlistSessionInterface {
    *   TRUE if the given wishlist order id exists in the session, FALSE
    *   otherwise.
    */
-  public function hasCartId($wishlist_id);
+  public function hasWishlistId($wishlist_id);
 
   /**
    * Deletes the given wishlist order id from the session.
@@ -47,6 +47,6 @@ interface WishlistSessionInterface {
    * @param int $wishlist_id
    *   The wishlist order ID.
    */
-  public function deleteCartId($wishlist_id);
+  public function deleteWishlistId($wishlist_id);
 
 }
