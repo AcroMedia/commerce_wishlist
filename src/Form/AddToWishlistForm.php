@@ -19,18 +19,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class AddToWishlistForm extends ContentEntityForm {
 
   /**
-   * The cart manager.
+   * The wishlist manager.
    *
-   * @var \Drupal\commerce_cart\CartManagerInterface
+   * @var \Drupal\commerce_wishlist\WishlistManagerInterface
    */
-  protected $cartManager;
+  protected $wishlistManager;
 
   /**
-   * The cart provider.
+   * The wishlist provider.
    *
-   * @var \Drupal\commerce_cart\CartProviderInterface
+   * @var \Drupal\commerce_wishlist\WishlistProviderInterface
    */
-  protected $cartProvider;
+  protected $wishlistProvider;
 
   /**
    * The order type resolver.
@@ -47,24 +47,24 @@ class AddToWishlistForm extends ContentEntityForm {
   protected $storeContext;
 
   /**
-   * Constructs a new AddToCartForm object.
+   * Constructs a new AddToWishlistForm object.
    *
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
    *   The entity manager.
-   * @param \Drupal\commerce_cart\CartManagerInterface $cart_manager
+   * @param \Drupal\commerce_wishlist\WishlistManagerInterface $wishlist_manager
    *   The cart manager.
-   * @param \Drupal\commerce_cart\CartProviderInterface $cart_provider
+   * @param \Drupal\commerce_wishlist\WishlistProviderInterface $wishlist_provider
    *   The cart provider.
    * @param \Drupal\commerce_order\Resolver\OrderTypeResolverInterface $order_type_resolver
    *   The order type resolver.
    * @param \Drupal\commerce_store\StoreContextInterface $store_context
    *   The store context.
    */
-  public function __construct(EntityManagerInterface $entity_manager, CartManagerInterface $cart_manager, CartProviderInterface $cart_provider, OrderTypeResolverInterface $order_type_resolver, StoreContextInterface $store_context) {
+  public function __construct(EntityManagerInterface $entity_manager, WishlistManagerInterface $wishlist_manager, WishlistProviderInterface $wishlist_provider, OrderTypeResolverInterface $order_type_resolver, StoreContextInterface $store_context) {
     parent::__construct($entity_manager);
 
-    $this->cartManager = $cart_manager;
-    $this->cartProvider = $cart_provider;
+    $this->wishlistManager = $wishlist_manager;
+    $this->wishlistProvider = $wishlist_provider;
     $this->orderTypeResolver = $order_type_resolver;
     $this->storeContext = $store_context;
   }
@@ -75,8 +75,8 @@ class AddToWishlistForm extends ContentEntityForm {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity.manager'),
-      $container->get('commerce_cart.cart_manager'),
-      $container->get('commerce_cart.cart_provider'),
+      $container->get('commerce_wishlist.wishlist_manager'),
+      $container->get('commerce_wishlist.wishlist_provider'),
       $container->get('commerce_order.chain_order_type_resolver'),
       $container->get('commerce_store.store_context')
     );
@@ -102,7 +102,7 @@ class AddToWishlistForm extends ContentEntityForm {
   protected function actions(array $form, FormStateInterface $form_state) {
     $actions['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Add to cart'),
+      '#value' => $this->t('Add to wishlist'),
       '#submit' => ['::submitForm'],
     ];
 
@@ -123,15 +123,15 @@ class AddToWishlistForm extends ContentEntityForm {
     $order_type = $this->orderTypeResolver->resolve($line_item);
 
     $store = $this->selectStore($purchased_entity);
-    $cart = $this->cartProvider->getCart($order_type, $store);
-    if (!$cart) {
-      $cart = $this->cartProvider->createCart($order_type, $store);
+    $wishlist = $this->wishlistProvider->getWishlist($order_type, $store);
+    if (!$wishlist) {
+      $wishlist = $this->wishlistProvider->createWishlist($order_type, $store);
     }
-    $this->cartManager->addLineItem($cart, $line_item, $form_state->get(['settings', 'combine']));
+    $this->wishlistManager->addLineItem($wishlist, $line_item, $form_state->get(['settings', 'combine']));
 
-    drupal_set_message($this->t('@entity added to @cart-link.', [
+    drupal_set_message($this->t('@entity added to @wishlist-link.', [
       '@entity' => $purchased_entity->label(),
-      '@cart-link' => Link::createFromRoute($this->t('your cart', [], ['context' => 'cart link']), 'commerce_cart.page')->toString(),
+      '@wishlist-link' => Link::createFromRoute($this->t('your wishlist', [], ['context' => 'wishlist link']), 'commerce_wishlist.page')->toString(),
     ]));
   }
 
@@ -157,7 +157,7 @@ class AddToWishlistForm extends ContentEntityForm {
    * one of them, then that store is selected.
    *
    * @param \Drupal\commerce\PurchasableEntityInterface $entity
-   *   The entity being added to cart.
+   *   The entity being added to wishlist.
    *
    * @throws \Exception
    *   When the entity can't be purchased from the current store.

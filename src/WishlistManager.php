@@ -14,12 +14,12 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Default implementation of the cart manager.
+ * Default implementation of the wishlist manager.
  *
  * Fires its own events, different from the order entity events by being a
- * result of user interaction (add to cart form, cart view, etc).
+ * result of user interaction (add to wishlist form, wishlist view, etc).
  */
-class CartManager implements CartManagerInterface {
+class WishlistManager implements WishlistManagerInterface {
 
   /**
    * The line item storage.
@@ -31,7 +31,7 @@ class CartManager implements CartManagerInterface {
   /**
    * The line item matcher.
    *
-   * @var \Drupal\commerce_cart\LineItemMatcherInterface
+   * @var \Drupal\commerce_wishlist\LineItemMatcherInterface
    */
   protected $lineItemMatcher;
 
@@ -43,11 +43,11 @@ class CartManager implements CartManagerInterface {
   protected $eventDispatcher;
 
   /**
-   * Constructs a new CartManager object.
+   * Constructs a new WishlistManager object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\commerce_cart\LineItemMatcherInterface $line_item_matcher
+   * @param \Drupal\commerce_wishlist\LineItemMatcherInterface $line_item_matcher
    *   The line item matcher.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
@@ -61,25 +61,25 @@ class CartManager implements CartManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function emptyCart(OrderInterface $cart, $save_cart = TRUE) {
-    $line_items = $cart->getLineItems();
+  public function emptyWishlist(OrderInterface $wishlist, $save_wishlist = TRUE) {
+    $line_items = $wishlist->getLineItems();
     foreach ($line_items as $line_item) {
       $line_item->delete();
     }
-    $cart->setLineItems([]);
+    $wishlist->setLineItems([]);
 
-    $this->eventDispatcher->dispatch(CartEvents::CART_EMPTY, new CartEmptyEvent($cart, $line_items));
-    if ($save_cart) {
-      $cart->save();
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_EMPTY, new WishlistEmptyEvent($wishlist, $line_items));
+    if ($save_wishlist) {
+      $wishlist->save();
     }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function addEntity(OrderInterface $cart, PurchasableEntityInterface $entity, $quantity = 1, $combine = TRUE, $save_cart = TRUE) {
+  public function addEntity(OrderInterface $wishlist, PurchasableEntityInterface $entity, $quantity = 1, $combine = TRUE, $save_wishlist = TRUE) {
     $line_item = $this->createLineItem($entity, $quantity);
-    return $this->addLineItem($cart, $line_item, $combine);
+    return $this->addLineItem($wishlist, $line_item, $combine);
   }
 
   /**
@@ -89,6 +89,7 @@ class CartManager implements CartManagerInterface {
     $line_item = $this->lineItemStorage->createFromPurchasableEntity($entity, [
       'quantity' => $quantity,
       // @todo Remove once the price calculation is in place.
+      // @see CartManager.php ->createLineItem.
       'unit_price' => $entity->price,
     ]);
 
@@ -98,14 +99,14 @@ class CartManager implements CartManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function addLineItem(OrderInterface $cart, LineItemInterface $line_item, $combine = TRUE, $save_cart = TRUE) {
+  public function addLineItem(OrderInterface $wishlist, LineItemInterface $line_item, $combine = TRUE, $save_wishlist = TRUE) {
     $purchased_entity = $line_item->getPurchasedEntity();
     $quantity = $line_item->getQuantity();
     $matching_line_item = NULL;
     if ($combine) {
-      $matching_line_item = $this->lineItemMatcher->match($line_item, $cart->getLineItems());
+      $matching_line_item = $this->lineItemMatcher->match($line_item, $wishlist->getLineItems());
     }
-    $needs_cart_save = FALSE;
+    $needs_wishlist_save = FALSE;
     if ($matching_line_item) {
       $new_quantity = $matching_line_item->getQuantity() + $quantity;
       $matching_line_item->setQuantity($new_quantity);
@@ -113,14 +114,14 @@ class CartManager implements CartManagerInterface {
     }
     else {
       $line_item->save();
-      $cart->addLineItem($line_item);
-      $needs_cart_save = TRUE;
+      $wishlist->addLineItem($line_item);
+      $needs_wishlist_save = TRUE;
     }
 
-    $event = new CartEntityAddEvent($cart, $purchased_entity, $quantity, $line_item);
-    $this->eventDispatcher->dispatch(CartEvents::CART_ENTITY_ADD, $event);
-    if ($needs_cart_save && $save_cart) {
-      $cart->save();
+    $event = new WishlistEntityAddEvent($wishlist, $purchased_entity, $quantity, $line_item);
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ENTITY_ADD, $event);
+    if ($needs_wishlist_save && $save_wishlist) {
+      $wishlist->save();
     }
 
     return $line_item;
@@ -129,23 +130,23 @@ class CartManager implements CartManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function updateLineItem(OrderInterface $cart, LineItemInterface $line_item) {
+  public function updateLineItem(OrderInterface $wishlist, LineItemInterface $line_item) {
     /** @var \Drupal\commerce_order\Entity\LineItemInterface $original_line_item */
     $original_line_item = $this->lineItemStorage->loadUnchanged($line_item->id());
     $line_item->save();
-    $event = new CartLineItemUpdateEvent($cart, $line_item, $original_line_item);
-    $this->eventDispatcher->dispatch(CartEvents::CART_LINE_ITEM_UPDATE, $event);
+    $event = new WishlistLineItemUpdateEvent($wishlist, $line_item, $original_line_item);
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_LINE_ITEM_UPDATE, $event);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function removeLineItem(OrderInterface $cart, LineItemInterface $line_item, $save_cart = TRUE) {
+  public function removeLineItem(OrderInterface $wishlist, LineItemInterface $line_item, $save_wishlist = TRUE) {
     $line_item->delete();
-    $cart->removeLineItem($line_item);
-    $this->eventDispatcher->dispatch(CartEvents::CART_LINE_ITEM_REMOVE, new CartLineItemRemoveEvent($cart, $line_item));
-    if ($save_cart) {
-      $cart->save();
+    $wishlist->removeLineItem($line_item);
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_LINE_ITEM_REMOVE, new WishlistLineItemRemoveEvent($wishlist, $line_item));
+    if ($save_wishlist) {
+      $wishlist->save();
     }
   }
 
