@@ -192,3 +192,18 @@ function commerce_wishlist_order_type_form_submit($form, FormStateInterface $for
   $order_type->setThirdPartySetting('commerce_wishlist', 'refresh_frequency', $settings['refresh_frequency']);
   $order_type->save();
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_wishlist_form_entity_view_display_edit_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  //dpm($form);
+  dpm($form_id);
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function commerce_wishlist_field_widget_form_alter(&$element, \Drupal\Core\Form\FormStateInterface $form_state, $context) {
+  dpm($element);
+}
