@@ -1,0 +1,13 @@
+commerce_order.commerce_order_type.*.third_party.commerce_wishlist:
+  type: mapping
+  label: 'Wishlist settings'
+  mapping:
+    wishlist_form_view:
+        type: string
+        label: 'Wishlist form view'
+    refresh_mode:
+        type: string
+        label: 'Wishlist refresh mode'
+    refresh_frequency:
+        type: integer
+        label: 'Wishlist refresh frequency'
