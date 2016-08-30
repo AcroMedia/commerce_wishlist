@@ -194,16 +194,37 @@ function commerce_wishlist_order_type_form_submit($form, FormStateInterface $for
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
+ * Implements hook_field_formatter_settings_summary_alter().
+ *
+ * Shows in the add-to-cart summary whether or not the wishlist is enabled.
  */
-function commerce_wishlist_form_entity_view_display_edit_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  //dpm($form);
-  dpm($form_id);
+function commerce_wishlist_field_formatter_settings_summary_alter(&$summary, $context) {
+  // Append a message to the summary when foo_formatter has
+  // my_setting set to TRUE for the current view mode.
+  if ($context['formatter']->getPluginId() == 'commerce_add_to_cart') {
+    if ($context['formatter']->getThirdPartySetting('commerce_wishlist', 'show_wishlist')) {
+      $summary[] = t('Wishlist enabled.');
+    } else {
+      $summary[] = t('Wishlist disabled.');
+    }
+  }
 }
 
 /**
- * Implements hook_field_widget_form_alter().
+ * Implements hook_field_formatter_third_party_settings_form().
+ *
+ * Extends the add to cart formatter form with a show wishlist button.
  */
-function commerce_wishlist_field_widget_form_alter(&$element, \Drupal\Core\Form\FormStateInterface $form_state, $context) {
-  dpm($element);
+function commerce_wishlist_field_formatter_third_party_settings_form($plugin, $field_definition, $view_mode, $form, $form_state) {
+  $element = array();
+  // Add a 'my_setting' checkbox to the settings form for 'foo_formatter' field
+  // formatters.
+  if ($plugin->getPluginId() == 'commerce_add_to_cart') {
+    $element['show_wishlist'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show Wishlist Button'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'show_wishlist'),
+    );
+  }
+  return $element;
 }
