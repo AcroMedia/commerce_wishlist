@@ -217,13 +217,27 @@ function commerce_wishlist_field_formatter_settings_summary_alter(&$summary, $co
  */
 function commerce_wishlist_field_formatter_third_party_settings_form($plugin, $field_definition, $view_mode, $form, $form_state) {
   $element = array();
-  // Add a 'my_setting' checkbox to the settings form for 'foo_formatter' field
-  // formatters.
+
   if ($plugin->getPluginId() == 'commerce_add_to_cart') {
     $element['show_wishlist'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Show Wishlist Button'),
+      '#title' => t('Show wishlist button'),
       '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'show_wishlist'),
+    );
+    $element['ajax_wishlist'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display "Add to wishlist" as an ajax link'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'ajax_wishlist'),
+    );
+    $element['weight_wishlist'] = array(
+      '#type' => 'number',
+      '#title' => t('Change the weight of the wishlist button.'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'weight_wishlist'),
+    );
+    $element['label_wishlist'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Override the wishlist button label'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'label_wishlist'),
     );
   }
   return $element;

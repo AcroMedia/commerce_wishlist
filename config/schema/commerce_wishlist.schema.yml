@@ -18,3 +18,12 @@ commerce_product.commerce_product_type.*.third_party.commerce_wishlist:
     show_wishlist:
       type: boolean
       label: 'Show wishlist button'
+    ajax_wishlist:
+      type: boolean
+      label: 'Render wishlist button as ajax link'
+    weight_wishlist:
+      type: integer
+      label: 'Modify wishlist button sort order'
+    label_wishlist:
+      type: text
+      label: 'Override the button label'
