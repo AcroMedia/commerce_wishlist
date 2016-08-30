@@ -242,3 +242,10 @@ function commerce_wishlist_field_formatter_third_party_settings_form($plugin, $f
   }
   return $element;
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_wishlist_form_commerce_line_item_product_variation_add_to_cart_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  dpm("I need to know which entity type and what view mode I'm viewing.");
+}
