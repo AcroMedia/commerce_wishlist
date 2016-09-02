@@ -86,7 +86,7 @@ function commerce_wishlist_user_login($account) {
  */
 function commerce_wishlist_commerce_order_delete(OrderInterface $order) {
   if (!empty($order->wishlist)) {
-    \Drupal::service('commerce_wishlist.wishlist_session')->deleteCartId($order->id());
+    \Drupal::service('commerce_wishlist.wishlist_session')->deleteWishlistId($order->id());
   }
 }
 
@@ -282,49 +282,63 @@ function commerce_wishlist_form_commerce_line_item_product_variation_add_to_cart
 /**
  * Form submit handler for add-to-wishlist actions.
  *
+ * Note that since we must fire this function off using a static form_alter call,
+ * we have no choice but to bring in the services and objects that we need.
+ * Normally we would create a class and use dependency injection to get at all
+ * of this context. We are very open to a better way of implmenting this hijack
+ * of the add to cart form. For now, it's a 1:1 copy from the core add to cart
+ * form ::submitForm process.
+ *
  * @param array $form
  * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @throws \Exception
  */
 function commerce_wishlist_add_to_wishlist_form_submit($form, FormStateInterface $form_state) {
-  \Drupal::logger('commerce_wishlist')->notice('for has been submitted.') ;
-  /** @var \Drupal\commerce_order\Entity\LineItemInterface $line_item */
-  $line_item = $form_state->getFormObject()->getEntity();
-  /** @var \Drupal\commerce\PurchasableEntityInterface $purchased_entity */
-//  $purchased_entity = $line_item->get;
-  ob_start();
-  var_dump($line_item);
 
-  \Drupal::logger('commerce_wishlist')->notice("hello? ".ob_get_clean());
-  return;
-  $order_resolver = \Drupal::service('commerce_order.default_order_type_resolver');
+  // Grab all objects that we need.
+  /** @var \Drupal\commerce_cart\Form\AddToCartForm $add_to_cart_form */
+  /** @var \Drupal\commerce_order\Entity\LineItem $line_item */
+  /** @var \Drupal\commerce\PurchasableEntityInterface $purchased_entity */
+  $add_to_cart_form  = $form_state->getFormObject();
+  $line_item         = $add_to_cart_form->buildEntity($form,$form_state);
+  $purchased_entity  = $line_item->getPurchasedEntity();
+
+  // Grab all the services we need.
+  /** @var \Drupal\commerce_order\Resolver\DefaultOrderTypeResolver $order_resolver */
+  /** @var \Drupal\commerce_store\StoreContext $store_context */
+  /** @var \Drupal\commerce_wishlist\WishlistProvider $wishlist_provider */
+  /** @var \Drupal\commerce_wishlist\WishlistManager $wishlist_manager */
+  $order_resolver    = \Drupal::service('commerce_order.default_order_type_resolver');
+  $store_context     = \Drupal::service('commerce_store.store_context');
+  $wishlist_provider = \Drupal::service('commerce_wishlist.wishlist_provider');
+  $wishlist_manager  = \Drupal::service('commerce_wishlist.wishlist_manager');
+
+  // Determine the order type to use.
   $order_type = $order_resolver->resolve($line_item);
 
-  /* Find a store */
-  // @todo: enable multiple stores.
+  // Find a store to use.
   $stores = $purchased_entity->getStores();
-  $store = reset($stores);
-  /*
   if (count($stores) === 1) {
     $store = reset($stores);
   }
   else {
-    $store = $this->storeContext->getStore();
+    $store = $store_context->getStore();
     if (!in_array($store, $stores)) {
       // Indicates that the site listings are not filtered properly.
       throw new \Exception("The given entity can't be purchased from the current store.");
     }
-  }*/
+  }
 
-  $wishlist_provider = \Drupal::service('commerce_wishlist.wishlist_provider');
+  // Use existing or create a new wishlist.
   $wishlist = $wishlist_provider->getWishlist($order_type, $store);
   if (!$wishlist) {
     $wishlist = $wishlist_provider->createWishlist($order_type, $store);
   }
-  $wishlist_manager = \Drupal::service('commerce_wishlist.wishlist_manager');
   $wishlist_manager->addLineItem($wishlist, $line_item, $form_state->get(['settings', 'combine']));
 
-  drupal_set_message($this->t('@entity added to @wishlist-link.', [
+  // Let people know about the outcome.
+  drupal_set_message(t('@entity added to @wishlist-link.', [
     '@entity' => $purchased_entity->label(),
-    '@wishlist-link' => Link::createFromRoute($this->t('your wishlist', [], ['context' => 'wishlist link']), 'commerce_wishlist.page')->toString(),
+    '@wishlist-link' => Link::createFromRoute(t('your wishlist', [], ['context' => 'wishlist link']), 'commerce_wishlist.page')->toString(),
   ]));
 }
