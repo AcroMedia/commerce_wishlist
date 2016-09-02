@@ -316,7 +316,7 @@ function commerce_wishlist_add_to_wishlist_form_submit($form, FormStateInterface
   // Determine the order type to use.
   $order_type = $order_resolver->resolve($line_item);
 
-  // Find a store to use.
+  // Find a store to use.git
   $stores = $purchased_entity->getStores();
   if (count($stores) === 1) {
     $store = reset($stores);
@@ -341,4 +341,15 @@ function commerce_wishlist_add_to_wishlist_form_submit($form, FormStateInterface
     '@entity' => $purchased_entity->label(),
     '@wishlist-link' => Link::createFromRoute(t('your wishlist', [], ['context' => 'wishlist link']), 'commerce_wishlist.page')->toString(),
   ]));
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function commerce_wishlist_views_data_alter(array &$data) {
+  $data['commerce_line_item']['edit_wishlist_quantity']['field'] = [
+    'title' => t('Wishlist quantity text field'),
+    'help' => t('Adds a text field for editing the quantity.'),
+    'id' => 'commerce_line_item_edit_quantity_wishlist',
+  ];
 }
