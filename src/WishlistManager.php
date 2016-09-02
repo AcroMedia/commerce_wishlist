@@ -10,6 +10,7 @@ use Drupal\commerce_wishlist\Event\WishlistEmptyEvent;
 use Drupal\commerce_wishlist\Event\WishlistEntityAddEvent;
 use Drupal\commerce_wishlist\Event\WishlistLineItemRemoveEvent;
 use Drupal\commerce_wishlist\Event\WishlistLineItemUpdateEvent;
+use Drupal\commerce_price\Calculator;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -108,7 +109,7 @@ class WishlistManager implements WishlistManagerInterface {
     }
     $needs_wishlist_save = FALSE;
     if ($matching_line_item) {
-      $new_quantity = $matching_line_item->getQuantity() + $quantity;
+      $new_quantity = Calculator::add($matching_line_item->getQuantity(), $quantity);
       $matching_line_item->setQuantity($new_quantity);
       $matching_line_item->save();
     }
@@ -118,7 +119,8 @@ class WishlistManager implements WishlistManagerInterface {
       $needs_wishlist_save = TRUE;
     }
 
-    $event = new WishlistEntityAddEvent($wishlist, $purchased_entity, $quantity, $line_item);
+    // @todo: figure out why this produces a fatal error...
+    // $event = new WishlistEntityAddEvent($wishlist, $purchased_entity, $quantity, $line_item);
     $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ENTITY_ADD, $event);
     if ($needs_wishlist_save && $save_wishlist) {
       $wishlist->save();

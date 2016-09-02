@@ -3,11 +3,27 @@ commerce_order.commerce_order_type.*.third_party.commerce_wishlist:
   label: 'Wishlist settings'
   mapping:
     wishlist_form_view:
-        type: string
-        label: 'Wishlist form view'
+      type: string
+      label: 'Wishlist form view'
     refresh_mode:
-        type: string
-        label: 'Wishlist refresh mode'
+      type: string
+      label: 'Wishlist refresh mode'
     refresh_frequency:
-        type: integer
-        label: 'Wishlist refresh frequency'
+      type: integer
+      label: 'Wishlist refresh frequency'
+commerce_product.commerce_product_type.*.third_party.commerce_wishlist:
+  type: mapping
+  label: 'Wishlist settings'
+  mapping:
+    show_wishlist:
+      type: boolean
+      label: 'Show wishlist button'
+    ajax_wishlist:
+      type: boolean
+      label: 'Render wishlist button as ajax link'
+    weight_wishlist:
+      type: integer
+      label: 'Modify wishlist button sort order'
+    label_wishlist:
+      type: text
+      label: 'Override the button label'
