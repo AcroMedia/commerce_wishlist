@@ -7,8 +7,10 @@
 
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -247,5 +249,82 @@ function commerce_wishlist_field_formatter_third_party_settings_form($plugin, $f
  * Implements hook_form_FORM_ID_alter().
  */
 function commerce_wishlist_form_commerce_line_item_product_variation_add_to_cart_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  dpm("I need to know which entity type and what view mode I'm viewing.");
+
+  // The product entity is thankfully available in the form storage.
+  $form_data = $form_state->getStorage();
+  /** @var \Drupal\commerce_product\Entity\ProductInterface $product */
+  $product = $form_data['product'];
+
+  // Grab the view mode third party settings.
+  $display = EntityViewDisplay::collectRenderDisplay($product, $form_data['view_mode']);
+  $settings = $display->get("content")['variations']['third_party_settings']['commerce_wishlist'];
+
+  // Add the button
+  if ($settings['show_wishlist'] == 1) {
+    $label = ($settings['label_wishlist'] != "")? $settings['label_wishlist'] : t('Add to wishlist');
+    $weight = ($settings['weight_wishlist'] != "")?$settings['weight_wishlist']:99;
+    if ($settings['ajax_wishlist'] != 1) {
+      $form['actions']['wishlist'] = array(
+        '#type' => 'submit',
+        '#value' => $label,
+        '#weight' => $weight,
+        '#submit' => array('commerce_wishlist_add_to_wishlist_form_submit'),
+      );
+    } else {
+      $form['actions']['wishlist'] = array(
+        '#markup' => '<a href="" class="commerce-wishlist-ajax">' . $label . ' - Not Implemented Yet</a>',
+        '#weight' => $weight,
+      );
+    }
+  }
+}
+
+/**
+ * Form submit handler for add-to-wishlist actions.
+ *
+ * @param array $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ */
+function commerce_wishlist_add_to_wishlist_form_submit($form, FormStateInterface $form_state) {
+  \Drupal::logger('commerce_wishlist')->notice('for has been submitted.') ;
+  /** @var \Drupal\commerce_order\Entity\LineItemInterface $line_item */
+  $line_item = $form_state->getFormObject()->getEntity();
+  /** @var \Drupal\commerce\PurchasableEntityInterface $purchased_entity */
+//  $purchased_entity = $line_item->get;
+  ob_start();
+  var_dump($line_item);
+
+  \Drupal::logger('commerce_wishlist')->notice("hello? ".ob_get_clean());
+  return;
+  $order_resolver = \Drupal::service('commerce_order.default_order_type_resolver');
+  $order_type = $order_resolver->resolve($line_item);
+
+  /* Find a store */
+  // @todo: enable multiple stores.
+  $stores = $purchased_entity->getStores();
+  $store = reset($stores);
+  /*
+  if (count($stores) === 1) {
+    $store = reset($stores);
+  }
+  else {
+    $store = $this->storeContext->getStore();
+    if (!in_array($store, $stores)) {
+      // Indicates that the site listings are not filtered properly.
+      throw new \Exception("The given entity can't be purchased from the current store.");
+    }
+  }*/
+
+  $wishlist_provider = \Drupal::service('commerce_wishlist.wishlist_provider');
+  $wishlist = $wishlist_provider->getWishlist($order_type, $store);
+  if (!$wishlist) {
+    $wishlist = $wishlist_provider->createWishlist($order_type, $store);
+  }
+  $wishlist_manager = \Drupal::service('commerce_wishlist.wishlist_manager');
+  $wishlist_manager->addLineItem($wishlist, $line_item, $form_state->get(['settings', 'combine']));
+
+  drupal_set_message($this->t('@entity added to @wishlist-link.', [
+    '@entity' => $purchased_entity->label(),
+    '@wishlist-link' => Link::createFromRoute($this->t('your wishlist', [], ['context' => 'wishlist link']), 'commerce_wishlist.page')->toString(),
+  ]));
 }
