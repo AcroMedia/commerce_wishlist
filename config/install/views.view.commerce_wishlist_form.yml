@@ -262,7 +262,7 @@ display:
           empty_zero: false
           hide_alter_empty: true
           entity_type: commerce_line_item
-          plugin_id: commerce_line_item_edit_quantity
+          plugin_id: commerce_line_item_edit_quantity_wishlist
         remove_button:
           id: remove_button
           table: commerce_line_item
