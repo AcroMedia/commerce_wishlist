@@ -1,0 +1,15 @@
+entity.wishlist_template.collection:
+  path: '/admin/commerce/wishlist-templates'
+  defaults:
+    _entity_list: 'wishlist_template'
+    _title: 'Wishlist template'
+  requirements:
+    _permission: 'administer wishlist templates'
+
+entity.wishlist_template_type.collection:
+  path: '/admin/commerce/config/wishlist-template-types'
+  defaults:
+    _entity_list: 'wishlist_template_type'
+    _title: 'Wishlist template types'
+  requirements:
+    _permission: 'administer wishlist template types'

@@ -1,0 +1,15 @@
+name: Commerce Wishlist Template
+type: module
+description: Provides the ability to create product category lists that change the way a wishlist is created and presented.
+package: Commerce (contrib)
+core: 8.x
+dependencies:
+  - commerce_wishlist
+  - entity_reference
+config_devel:
+  install:
+    - wishlist_template.wishlist_template_type.default
+    - wishlist_template.settings
+    - core.entity_view_display.wishlist_template.default.default
+    - views.view.wishlist_templates
+    - system.action.commerce_wishlist_delete_templates_action

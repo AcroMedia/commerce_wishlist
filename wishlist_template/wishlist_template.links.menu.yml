@@ -1,0 +1,11 @@
+entity.wishlist_template.collection:
+  title: 'Wishlist template'
+  route_name: 'entity.wishlist_template.collection'
+  parent: 'commerce.admin_commerce'
+  description: 'Manage your wishlist templates.'
+
+entity.wishlist_template_type.collection:
+  title: 'Wishlist template types'
+  route_name: 'entity.wishlist_template_type.collection'
+  parent: 'commerce.configuration'
+  description: 'Manage your wishlist template types.'

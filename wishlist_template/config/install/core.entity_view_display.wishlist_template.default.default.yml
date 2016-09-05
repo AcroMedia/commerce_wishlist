@@ -1,0 +1,16 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - wishlist_template.wishlist_template_type.default
+  module:
+    - address
+id: wishlist_template.default.default
+targetEntityType: wishlist_template
+bundle: default
+mode: default
+content:
+  name:
+    type: true
+hidden:
+  name: true

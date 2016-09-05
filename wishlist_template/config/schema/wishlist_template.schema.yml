@@ -1,0 +1,22 @@
+wishlist_template.wishlist_template_type.*:
+  type: config_entity
+  label: 'Wishlist Tempalte type config'
+  mapping:
+    id:
+      type: string
+      label: 'Type'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string
+    description:
+      type: text
+      label: 'Description'
+
+views.field.wishlist_template:
+  type: views.field.field
+  mapping:
+    hide_single_wishlist_template:
+      type: boolean
+      label: 'Hide if there''s only one wishlist template.'

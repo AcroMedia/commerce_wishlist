@@ -1,0 +1,9 @@
+'administer wishlist templates':
+  title: 'Administer wishlist templates'
+  description: 'Allows users to create, update, and delete wishlist templates.'
+  'restrict access': TRUE
+
+'administer wishlist template types':
+  title: 'Administer wishlist template types'
+  description: 'Allows users to create, update, and delete wishlist template types.'
+  'restrict access': TRUE
