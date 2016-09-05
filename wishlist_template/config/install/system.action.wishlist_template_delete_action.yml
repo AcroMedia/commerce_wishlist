@@ -1,0 +1,13 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - commerce_store
+  module:
+    - entity
+id: wishlist_template_delete_action
+label: 'Delete wishlist template'
+type: commerce_store
+plugin: 'entity_delete_action:commerce_wishlist'
+configuration: {  }
