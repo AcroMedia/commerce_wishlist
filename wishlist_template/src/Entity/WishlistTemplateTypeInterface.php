@@ -3,10 +3,11 @@
 namespace Drupal\wishlist_template\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
-use Drupal\Core\Entity\EntityDescriptionInterface;
 
 /**
- * Defines the interface for wishlist template types.
+ * Provides an interface for defining Wishlist template type entities.
  */
-interface WishlistTemplateTypeInterface extends ConfigEntityInterface, EntityDescriptionInterface {
+interface WishlistTemplateTypeInterface extends ConfigEntityInterface {
+
+  // Add get/set methods for your configuration properties here.
 }

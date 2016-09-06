@@ -2,67 +2,81 @@
 
 namespace Drupal\wishlist_template\Entity;
 
-use Drupal\user\UserInterface;
-use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityChangedTrait;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\user\UserInterface;
 
 /**
- * Defines the store entity class.
+ * Defines the Wishlist template entity.
+ *
+ * @ingroup wishlist_template
  *
  * @ContentEntityType(
  *   id = "wishlist_template",
  *   label = @Translation("Wishlist template"),
- *   label_singular = @Translation("Wishlist template"),
- *   label_plural = @Translation("Wishlist templates"),
- *   label_count = @PluralTranslation(
- *     singular = "@count wishlist template",
- *     plural = "@count wishlist templates",
- *   ),
  *   bundle_label = @Translation("Wishlist template type"),
  *   handlers = {
- *     "event" = "Drupal\wishlist_template\Event\WishlistTemplateEvent",
- *     "storage" = "Drupal\wishlist_template\WishlistTemplateStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\wishlist_template\WishlistTemplateListBuilder",
- *     "views_data" = "Drupal\views\EntityViewsData",
+ *     "views_data" = "Drupal\wishlist_template\Entity\WishlistTemplateViewsData",
+ *
  *     "form" = {
+ *       "default" = "Drupal\wishlist_template\Form\WishlistTemplateForm",
  *       "add" = "Drupal\wishlist_template\Form\WishlistTemplateForm",
  *       "edit" = "Drupal\wishlist_template\Form\WishlistTemplateForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm"
+ *       "delete" = "Drupal\wishlist_template\Form\WishlistTemplateDeleteForm",
  *     },
+ *     "access" = "Drupal\wishlist_template\WishlistTemplateAccessControlHandler",
  *     "route_provider" = {
- *       "default" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
- *       "delete-multiple" = "Drupal\entity\Routing\DeleteMultipleRouteProvider",
+ *       "html" = "Drupal\wishlist_template\WishlistTemplateHtmlRouteProvider",
  *     },
- *     "translation" = "Drupal\content_translation\ContentTranslationHandler"
  *   },
  *   base_table = "wishlist_template",
- *   data_table = "wishlist_template_field_data",
- *   admin_permission = "administer wishlist templates",
- *   fieldable = TRUE,
- *   translatable = TRUE,
+ *   admin_permission = "administer wishlist template entities",
  *   entity_keys = {
- *     "id" = "wishlist_id",
+ *     "id" = "id",
  *     "bundle" = "type",
  *     "label" = "name",
+ *     "uuid" = "uuid",
+ *     "uid" = "user_id",
  *     "langcode" = "langcode",
- *     "uuid" = "uuid"
+ *     "status" = "status",
  *   },
  *   links = {
- *     "canonical" = "/wishlist_template/{wishlist_template}",
- *     "add-page" = "/wishlist_template/add",
- *     "add-form" = "/wishlist_template/add/{wishlist_template_type}",
- *     "edit-form" = "/wishlist_template/{wishlist_template}/edit",
- *     "delete-form" = "/wishlist_template/{wishlist_template}/delete",
- *     "delete-multiple-form" = "/admin/commerce/wishlist_templates/delete",
- *     "collection" = "/admin/commerce/wishlist_templates",
+ *     "canonical" = "/wishlist-template/wishlist_template/{wishlist_template}",
+ *     "add-page" = "/wishlist-template/wishlist_template/add",
+ *     "add-form" = "/wishlist-template/wishlist_template/add/{wishlist_template_type}",
+ *     "edit-form" = "/wishlist-template/wishlist_template/{wishlist_template}/edit",
+ *     "delete-form" = "/wishlist-template/wishlist_template/{wishlist_template}/delete",
+ *     "collection" = "/wishlist-template/wishlist_template",
  *   },
  *   bundle_entity_type = "wishlist_template_type",
- *   field_ui_base_route = "entity.wishlist_template_type.edit_form",
+ *   field_ui_base_route = "entity.wishlist_template_type.edit_form"
  * )
  */
 class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInterface {
+
+  use EntityChangedTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
+    parent::preCreate($storage_controller, $values);
+    $values += array(
+      'user_id' => \Drupal::currentUser()->id(),
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getType() {
+    return $this->bundle();
+  }
 
   /**
    * {@inheritdoc}
@@ -82,30 +96,60 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
   /**
    * {@inheritdoc}
    */
-  public function getOwner() {
-    return $this->get('uid')->entity;
+  public function getCreatedTime() {
+    return $this->get('created')->value;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setOwner(UserInterface $account) {
-    $this->set('uid', $account->id());
+  public function setCreatedTime($timestamp) {
+    $this->set('created', $timestamp);
     return $this;
   }
 
   /**
    * {@inheritdoc}
    */
+  public function getOwner() {
+    return $this->get('user_id')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getOwnerId() {
-    return $this->get('uid')->target_id;
+    return $this->get('user_id')->target_id;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setOwnerId($uid) {
-    $this->set('uid', $uid);
+    $this->set('user_id', $uid);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwner(UserInterface $account) {
+    $this->set('user_id', $account->id());
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isPublished() {
+    return (bool) $this->getEntityKey('status');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setPublished($published) {
+    $this->set('status', $published ? NODE_PUBLISHED : NODE_NOT_PUBLISHED);
     return $this;
   }
 
@@ -145,37 +189,63 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
-    $fields['type'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Type'))
-      ->setDescription(t('The wishlist template type.'))
-      ->setSetting('target_type', 'wishlist_template_type')
-      ->setReadOnly(TRUE);
-
-    $fields['uid'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Owner'))
-      ->setDescription(t('The store owner.'))
-      ->setDefaultValueCallback('Drupal\commerce_store\Entity\Store::getCurrentUserId')
+    $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Authored by'))
+      ->setDescription(t('The user ID of author of the Wishlist template entity.'))
+      ->setRevisionable(TRUE)
       ->setSetting('target_type', 'user')
-      ->setDisplayOptions('form', [
+      ->setSetting('handler', 'default')
+      ->setTranslatable(TRUE)
+      ->setDisplayOptions('view', array(
+        'label' => 'hidden',
+        'type' => 'author',
+        'weight' => 0,
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'entity_reference_autocomplete',
-        'weight' => 50,
-      ]);
+        'weight' => 5,
+        'settings' => array(
+          'match_operator' => 'CONTAINS',
+          'size' => '60',
+          'autocomplete_type' => 'tags',
+          'placeholder' => '',
+        ),
+      ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Name'))
-      ->setDescription(t('The wishlist template name.'))
-      ->setRequired(TRUE)
-      ->setTranslatable(TRUE)
-      ->setSettings([
-        'default_value' => '',
-        'max_length' => 255,
-      ])
-      ->setDisplayOptions('form', [
+      ->setDescription(t('The name of the Wishlist template entity.'))
+      ->setSettings(array(
+        'max_length' => 50,
+        'text_processing' => 0,
+      ))
+      ->setDefaultValue('')
+      ->setDisplayOptions('view', array(
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => -4,
+      ))
+      ->setDisplayOptions('form', array(
         'type' => 'string_textfield',
-        'weight' => 0,
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
+        'weight' => -4,
+      ))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['status'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Publishing status'))
+      ->setDescription(t('A boolean indicating whether the Wishlist template is published.'))
+      ->setDefaultValue(TRUE);
+
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(t('Created'))
+      ->setDescription(t('The time that the entity was created.'));
+
+    $fields['changed'] = BaseFieldDefinition::create('changed')
+      ->setLabel(t('Changed'))
+      ->setDescription(t('The time that the entity was last edited.'));
 
     $fields['taxonomy_term_view_mode'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Category view mode'))
@@ -208,15 +278,4 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
     return $fields;
   }
 
-  /**
-   * Default value callback for 'uid' base field definition.
-   *
-   * @see ::baseFieldDefinitions()
-   *
-   * @return array
-   *   An array of default values.
-   */
-  public static function getCurrentUserId() {
-    return [\Drupal::currentUser()->id()];
-  }
 }

@@ -2,21 +2,26 @@
 
 namespace Drupal\wishlist_template;
 
-use Drupal\wishlist_template\Entity\WishlistTemplateType;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
+use Drupal\Core\Routing\LinkGeneratorTrait;
+use Drupal\Core\Url;
 
 /**
- * Defines the list builder for wishlist_templates.
+ * Defines a class to build a listing of Wishlist template entities.
+ *
+ * @ingroup wishlist_template
  */
 class WishlistTemplateListBuilder extends EntityListBuilder {
+
+  use LinkGeneratorTrait;
 
   /**
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['name'] = t('Name');
-    $header['type'] = t('Type');
+    $header['id'] = $this->t('Wishlist template ID');
+    $header['name'] = $this->t('Name');
     return $header + parent::buildHeader();
   }
 
@@ -24,15 +29,16 @@ class WishlistTemplateListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    /** @var \Drupal\wishlist_template\Entity\WishlistTemplateInterface $entity */
-    $wishlist_template_type = WishlistTemplateType::load($entity->bundle());
-
-    $row['name']['data'] = [
-        '#type' => 'link',
-        '#title' => $entity->label(),
-      ] + $entity->toUrl()->toRenderArray();
-    $row['type'] = $wishlist_template_type->label();
-
+    /* @var $entity \Drupal\wishlist_template\Entity\WishlistTemplate */
+    $row['id'] = $entity->id();
+    $row['name'] = $this->l(
+      $entity->label(),
+      new Url(
+        'entity.wishlist_template.edit_form', array(
+          'wishlist_template' => $entity->id(),
+        )
+      )
+    );
     return $row + parent::buildRow($entity);
   }
 

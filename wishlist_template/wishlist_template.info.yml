@@ -7,9 +7,4 @@ dependencies:
   - commerce_wishlist
   - entity_reference
   - options
-config_devel:
-  install:
-    - wishlist_template.wishlist_template_type.default
-    - core.entity_view_display.wishlist_template.default.default
-    - views.view.wishlist_template
-    - system.action.wishlist_template_delete_action
+  - entity

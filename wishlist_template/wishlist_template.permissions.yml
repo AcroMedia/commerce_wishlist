@@ -1,9 +1,22 @@
-'administer wishlist templates':
-  title: 'Administer wishlist templates'
-  description: 'Allows users to create, update, and delete wishlist templates.'
-  'restrict access': TRUE
+add wishlist template entities:
+  title: 'Create new Wishlist template entities'
 
-'administer wishlist template types':
-  title: 'Administer wishlist template types'
-  description: 'Allows users to create, update, and delete wishlist template types.'
-  'restrict access': TRUE
+administer wishlist template entities:
+  title: 'Administer Wishlist template entities'
+  description: 'Allow to access the administration form to configure Wishlist template entities.'
+  restrict access: true
+
+delete wishlist template entities:
+  title: 'Delete Wishlist template entities'
+
+edit wishlist template entities:
+  title: 'Edit Wishlist template entities'
+
+access wishlist template overview:
+  title: 'Access the Wishlist template overview page'
+
+view published wishlist template entities:
+  title: 'View published Wishlist template entities'
+
+view unpublished wishlist template entities:
+  title: 'View unpublished Wishlist template entities'

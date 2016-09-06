@@ -6,30 +6,43 @@ use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Form controller for the store edit form.
+ * Form controller for Wishlist template edit forms.
+ *
+ * @ingroup wishlist_template
  */
 class WishlistTemplateForm extends ContentEntityForm {
 
   /**
    * {@inheritdoc}
    */
-  public function form(array $form, FormStateInterface $form_state) {
-    /* @var $wishlist_template \Drupal\wishlist_template\Entity\WishlistTemplate */
-    $form = parent::form($form, $form_state);
-    // $wishlist_template = $this->entity;
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    /* @var $entity \Drupal\wishlist_template\Entity\WishlistTemplate */
+    $form = parent::buildForm($form, $form_state);
+    $entity = $this->entity;
 
     return $form;
   }
 
   /**
-   * Overrides Drupal\Core\Entity\EntityFormController::save().
+   * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    $this->entity->save();
-    drupal_set_message($this->t('Saved the %label wishlist template.', [
-      '%label' => $this->entity->label(),
-    ]));
-    $form_state->setRedirect('entity.wishlist_template.collection');
+    $entity = $this->entity;
+    $status = parent::save($form, $form_state);
+
+    switch ($status) {
+      case SAVED_NEW:
+        drupal_set_message($this->t('Created the %label Wishlist template.', [
+          '%label' => $entity->label(),
+        ]));
+        break;
+
+      default:
+        drupal_set_message($this->t('Saved the %label Wishlist template.', [
+          '%label' => $entity->label(),
+        ]));
+    }
+    $form_state->setRedirect('entity.wishlist_template.canonical', ['wishlist_template' => $entity->id()]);
   }
 
 }

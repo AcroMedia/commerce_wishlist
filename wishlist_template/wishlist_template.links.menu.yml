@@ -1,11 +1,16 @@
+# Wishlist template menu items definition
 entity.wishlist_template.collection:
-  title: 'Wishlist template'
-  route_name: 'entity.wishlist_template.collection'
+  title: 'Wishlist template list'
+  route_name: entity.wishlist_template.collection
+  description: 'List Wishlist template entities'
   parent: 'commerce.admin_commerce'
-  description: 'Manage your wishlist templates.'
+  weight: 100
 
+# Wishlist template type menu items definition
 entity.wishlist_template_type.collection:
-  title: 'Wishlist template types'
-  route_name: 'entity.wishlist_template_type.collection'
+  title: 'Wishlist template type'
+  route_name: entity.wishlist_template_type.collection
+  description: 'List Wishlist template type (bundles)'
   parent: 'commerce.configuration'
-  description: 'Manage your wishlist template types.'
+  weight: 99
+

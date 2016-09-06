@@ -3,30 +3,85 @@
 namespace Drupal\wishlist_template\Entity;
 
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\user\EntityOwnerInterface;
 
 /**
- * Defines the interface for wishlist_templates.
+ * Provides an interface for defining Wishlist template entities.
+ *
+ * @ingroup wishlist_template
  */
-interface WishlistTemplateInterface extends ContentEntityInterface, EntityOwnerInterface {
+interface WishlistTemplateInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
+
+  // Add get/set methods for your configuration properties here.
 
   /**
-   * Gets the wishlist_template name.
+   * Gets the Wishlist template type.
    *
    * @return string
-   *   The wishlist_template name.
+   *   The Wishlist template type.
+   */
+  public function getType();
+
+  /**
+   * Gets the Wishlist template name.
+   *
+   * @return string
+   *   Name of the Wishlist template.
    */
   public function getName();
 
   /**
-   * Sets the wishlist_template name.
+   * Sets the Wishlist template name.
    *
    * @param string $name
-   *   The wishlist_template name.
+   *   The Wishlist template name.
    *
-   * @return $this
+   * @return \Drupal\wishlist_template\Entity\WishlistTemplateInterface
+   *   The called Wishlist template entity.
    */
   public function setName($name);
+
+  /**
+   * Gets the Wishlist template creation timestamp.
+   *
+   * @return int
+   *   Creation timestamp of the Wishlist template.
+   */
+  public function getCreatedTime();
+
+  /**
+   * Sets the Wishlist template creation timestamp.
+   *
+   * @param int $timestamp
+   *   The Wishlist template creation timestamp.
+   *
+   * @return \Drupal\wishlist_template\Entity\WishlistTemplateInterface
+   *   The called Wishlist template entity.
+   */
+  public function setCreatedTime($timestamp);
+
+  /**
+   * Returns the Wishlist template published status indicator.
+   *
+   * Unpublished Wishlist template are only visible to restricted users.
+   *
+   * @return bool
+   *   TRUE if the Wishlist template is published.
+   */
+  public function isPublished();
+
+  /**
+   * Sets the published status of a Wishlist template.
+   *
+   * @param bool $published
+   *   TRUE to set this Wishlist template to published, FALSE to set it to unpublished.
+   *
+   * @return \Drupal\wishlist_template\Entity\WishlistTemplateInterface
+   *   The called Wishlist template entity.
+   */
+  public function setPublished($published);
+
 
   /**
    * Gets the the view mode used for rendering the terms.
@@ -63,5 +118,4 @@ interface WishlistTemplateInterface extends ContentEntityInterface, EntityOwnerI
    * @return $this
    */
   public function setTerms($terms);
-
 }

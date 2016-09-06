@@ -2,10 +2,60 @@
 
 /**
  * @file
- * Defines the Wishlist template entity and associated features.
+ * Contains wishlist_template.module..
  */
 
-use Drupal\Core\Render\Element;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function wishlist_template_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the wishlist_template module.
+    case 'help.page.wishlist_template':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Description') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function wishlist_template_theme() {
+  $theme = [];
+  $theme['wishlist_template'] = array(
+    'render element' => 'elements',
+    'file' => 'wishlist_template.page.inc',
+    'template' => 'wishlist_template',
+  );
+  $theme['wishlist_template_content_add_list'] = [
+    'render element' => 'content',
+    'variables' => ['content' => NULL],
+    'file' => 'wishlist_template.page.inc',
+  ];
+  return $theme;
+}
+
+/**
+* Implements hook_theme_suggestions_HOOK().
+*/
+function wishlist_template_theme_suggestions_wishlist_template(array $variables) {
+  $suggestions = array();
+  $entity = $variables['elements']['#wishlist_template'];
+  $sanitized_view_mode = strtr($variables['elements']['#view_mode'], '.', '_');
+
+  $suggestions[] = 'wishlist_template__' . $sanitized_view_mode;
+  $suggestions[] = 'wishlist_template__' . $entity->bundle();
+  $suggestions[] = 'wishlist_template__' . $entity->bundle() . '__' . $sanitized_view_mode;
+  $suggestions[] = 'wishlist_template__' . $entity->id();
+  $suggestions[] = 'wishlist_template__' . $entity->id() . '__' . $sanitized_view_mode;
+  return $suggestions;
+}
 
 /**
  * Callback function that returns a list of taxonomy view modes.
@@ -27,44 +77,4 @@ function _wishlist_template_term_view_mode_values() {
   }
 
   return $allowed_values;
-}
-
-/**
- * Implements hook_theme().
- */
-function wishlist_template_theme() {
-  return [
-    'wishlist_template' => [
-      'render element' => 'elements',
-    ],
-  ];
-}
-
-/**
- * Implements hook_theme_suggestions_wishlist_template().
- */
-function wishlist_template_theme_suggestions_wishlist_template(array $variables) {
-  return _commerce_entity_theme_suggestions('wishlist_template', $variables);
-}
-
-/**
- * Prepares variables for wishlist template templates.
- *
- * Default template: wishlist-template.html.twig.
- *
- * @param array $variables
- *   An associative array containing:
- *   - elements: An associative array containing rendered fields.
- *   - attributes: HTML attributes for the containing element.
- */
-function template_preprocess_wishlist_template(array &$variables) {
-  /** @var Drupal\wishlist_template\Entity\WishlistTemplateInterface $wishlist_template */
-  $wishlist_template = $variables['elements']['#wishlist_template'];
-
-  $variables['wishlist_template_entity'] = $wishlist_template;
-  $variables['wishlist_template_url'] = $wishlist_template->toUrl();
-  $variables['wishlist_template'] = [];
-  foreach (Element::children($variables['elements']) as $key) {
-    $variables['wishlist_template'][$key] = $variables['elements'][$key];
-  }
 }

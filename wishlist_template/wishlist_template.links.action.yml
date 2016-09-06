@@ -1,11 +1,11 @@
-entity.wishlist_template.add_page:
-  route_name: entity.wishlist_template.add_page
-  title: 'Add wishlist template'
+entity.wishlist_template.add_form:
+  route_name: 'entity.wishlist_template.add_page'
+  title: 'Add Wishlist template'
   appears_on:
     - entity.wishlist_template.collection
-
 entity.wishlist_template_type.add_form:
-  route_name: entity.wishlist_template_type.add_form
-  title: 'Add wishlist template type'
+  route_name: 'entity.wishlist_template_type.add_form'
+  title: 'Add Wishlist template type'
   appears_on:
     - entity.wishlist_template_type.collection
+

@@ -6,7 +6,7 @@ use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
 
 /**
- * Defines the list builder for wishlist_template types.
+ * Provides a listing of Wishlist template type entities.
  */
 class WishlistTemplateTypeListBuilder extends ConfigEntityListBuilder {
 
@@ -14,7 +14,7 @@ class WishlistTemplateTypeListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label'] = $this->t('Wishlist Template type');
+    $header['label'] = $this->t('Wishlist template type');
     $header['id'] = $this->t('Machine name');
     return $header + parent::buildHeader();
   }
@@ -25,6 +25,7 @@ class WishlistTemplateTypeListBuilder extends ConfigEntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     $row['label'] = $entity->label();
     $row['id'] = $entity->id();
+    // You probably want a few more properties here...
     return $row + parent::buildRow($entity);
   }
 
