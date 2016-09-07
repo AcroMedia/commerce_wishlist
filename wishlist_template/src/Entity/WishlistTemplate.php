@@ -8,6 +8,7 @@ use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\user\UserInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 
 /**
  * Defines the Wishlist template entity.
@@ -216,7 +217,8 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
 
     $fields['name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Name'))
-      ->setDescription(t('The name of the Wishlist template entity.'))
+      ->setRequired(TRUE)
+      ->setDescription(t('The name of the Wishlist template.'))
       ->setSettings(array(
         'max_length' => 50,
         'text_processing' => 0,
@@ -258,7 +260,7 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
       ])
       ->setDisplayOptions('form', [
         'type' => 'select',
-        'weight' => 0,
+        'weight' => -3,
       ])
       ->setDisplayOptions('view', [
         'type' => 'hidden',
@@ -268,11 +270,18 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
 
     $fields['terms'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Categories'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE)
       ->setDescription(t('The categories used for grouping products the creating the wishlist template.'))
       ->setSetting('target_type', 'taxonomy_term')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
-        'weight' => 50,
+        'weight' => -2,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
       ]);
 
     return $fields;
