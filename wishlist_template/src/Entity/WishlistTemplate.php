@@ -187,6 +187,21 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
   /**
    * {@inheritdoc}
    */
+  public function getDefaultProducts() {
+    return $this->get('default_products')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDefaultProducts($terms) {
+    $this->set('default_products', $terms);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 

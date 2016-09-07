@@ -118,4 +118,22 @@ interface WishlistTemplateInterface extends ContentEntityInterface, EntityChange
    * @return $this
    */
   public function setTerms($terms);
+
+  /**
+   * Gets the default products for the template.
+   *
+   * @return array
+   *   The categories for the template.
+   */
+  public function getDefaultProducts();
+
+  /**
+   * Sets the default products for the template.
+   *
+   * @param array $terms
+   *   The categories for the template.
+   *
+   * @return $this
+   */
+  public function setDefaultProducts($terms);
 }
