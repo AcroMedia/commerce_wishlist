@@ -78,3 +78,69 @@ function _wishlist_template_term_view_mode_values() {
 
   return $allowed_values;
 }
+
+/**
+ * Create and return a list of views that are capable of rendering variations.
+ *
+ * Wishlist template sends the valid order id and a valid list of product ids as
+ * arguments (in that order) to the selected views from within the entity.
+ *
+ * - The base table MUST be 'commerce_line_item'.
+ * - The first argument MUST be 'order_id'.
+ *   - This will be determined based on the url arguments.
+ * - The second argument MUST be 'purchased_entity'
+ *   - Make sure you select 'allow multiple' otherwise this won't work as expected.
+ *   - Code and two queries determine all product ids that should show up.
+ *   - We are using Views purely as a very customizable list generator.
+ *   - We have to do it this way to support any number of taxonomy fields and
+ *     any kind of term (regardless of vocabulary).
+ *
+ * @return array
+ */
+function _wishlist_template_line_item_views_values() {
+  /** @var Drupal\Core\Entity\Query\QueryFactory $query_factory */
+  /** @var Drupal\Core\Entity\Query\QueryFactory $query_factory */
+  /** @var \Drupal\Core\Entity\Query\QueryInterface $views_query_interface */
+  $query_factory = \Drupal::service('entity.query');
+  $entity_manager = \Drupal::service('entity.manager');
+  $views_query_interface = $query_factory->get('view');
+
+  // Grab all the line item views.
+  $views = $views_query_interface->condition('base_table','commerce_line_item')->execute();
+
+  // "Explode" based on display versions.
+  $wishlist_views = array();
+  $views_default_args = array();
+  foreach ($views as $view_id) {
+    /** @var \Drupal\views\Entity\View $view */
+    $view = $entity_manager->getStorage('view')->load($view_id);
+    $view_displays = array_keys($view->get('display'));
+    foreach ($view_displays as $view_display) {
+      $display = $view->getDisplay($view_display);
+      $argument_keys = array_keys($display['display_options']['arguments']);
+
+      // Track default arguments. See next step for why.
+      if ($view_display == "default") {
+        $views_default_args[$view_id] = $argument_keys;
+      }
+
+      // Inherit default args if no argument keys are found.
+      if (empty($argument_keys) && !empty($views_default_args[$view_id])) {
+        $argument_keys = $views_default_args[$view_id];
+      }
+
+      // If this view has the appropriate args, return the info.
+      if (in_array("order_id", $argument_keys) &&
+          in_array("purchased_entity", $argument_keys)) {
+        $combo_id = $view_id . '---' . $view_display;
+        $label = $view->label() . ': ' . $view_display;
+        $pseudo_machine_name = ' (' . $view_id .  '.' . $view_display . ')';
+
+        // This view and display have the valid requirements to render product
+        // variations.
+        $wishlist_views[$combo_id] = $label . $pseudo_machine_name;
+      }
+    }
+  }
+  return $wishlist_views;
+}

@@ -82,7 +82,6 @@ interface WishlistTemplateInterface extends ContentEntityInterface, EntityChange
    */
   public function setPublished($published);
 
-
   /**
    * Gets the the view mode used for rendering the terms.
    *
@@ -90,6 +89,24 @@ interface WishlistTemplateInterface extends ContentEntityInterface, EntityChange
    *   The wishlist_template taxonomy_term_view_mode.
    */
   public function getTaxonomyTermViewMode();
+
+  /**
+   * Sets the view used to render product variations.
+   *
+   * @param string $taxonomy_term_view_mode
+   *   The wishlist_template taxonomy_term_view_mode.
+   *
+   * @return $this
+   */
+  public function setProductListRenderer($product_list_renderer);
+
+  /**
+   * Gets the view used to render product variations.
+   *
+   * @return string
+   *   The wishlist_template $product_list_renderer.
+   */
+  public function getProductListRenderer();
 
   /**
    * Sets the wishlist_template taxonomy_term_view_mode.

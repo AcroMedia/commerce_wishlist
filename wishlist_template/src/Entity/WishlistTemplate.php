@@ -172,6 +172,21 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
   /**
    * {@inheritdoc}
    */
+  public function setProductListRenderer($product_list_renderer) {
+    $this->set('product_list_renderer', $product_list_renderer);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getProductListRenderer() {
+    return $this->get('product_list_renderer')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getTerms() {
     return $this->get('terms')->value;
   }
@@ -283,6 +298,32 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
+    $fields['product_list_renderer'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('View to be used when rendering products.'))
+      ->setDescription(t('On each template, we will render a taxonomy term and a
+                          list of products that match the term. You can use the 
+                          supplied view or clone it and create your own to 
+                          quickly enable you to add a product image or sales 
+                          price formatter, or whatever this template might need. 
+                          <br><br>To be included in the above list, views are 
+                          required to be a base table of line items and have an 
+                          argument for order_id and purchaseable_entity.'))
+      ->setRequired(TRUE)
+      ->setTranslatable(TRUE)
+      ->setSettings([
+        'allowed_values_function' => '_wishlist_template_line_item_views_values',
+        'multiple' => false,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'select',
+        'weight' => -3,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+
     $fields['terms'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Categories'))
       ->setRequired(TRUE)
@@ -290,6 +331,27 @@ class WishlistTemplate extends ContentEntityBase implements WishlistTemplateInte
       ->setDisplayConfigurable('form', TRUE)
       ->setDescription(t('The categories used for grouping products the creating the wishlist template.'))
       ->setSetting('target_type', 'taxonomy_term')
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => -2,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+      ]);
+
+    $fields['default_products'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Default Products'))
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDescription(t('The product(s) that will be added to the wishlist 
+                          template on the wishlist creation. Note that we are 
+                          referencing the products, not the variations. The default
+                          variation of this product will be added to the 
+                          wishlist. This does not currently work with other 
+                          types of product architectures.'))
+      ->setSetting('target_type', 'commerce_product')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
