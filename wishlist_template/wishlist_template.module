@@ -98,8 +98,7 @@ function _wishlist_template_term_view_mode_values() {
  * @return array
  */
 function _wishlist_template_line_item_views_values() {
-  /** @var Drupal\Core\Entity\Query\QueryFactory $query_factory */
-  /** @var Drupal\Core\Entity\Query\QueryFactory $query_factory */
+  /** @var \Drupal\Core\Entity\Query\QueryFactory $query_factory */
   /** @var \Drupal\Core\Entity\Query\QueryInterface $views_query_interface */
   $query_factory = \Drupal::service('entity.query');
   $entity_manager = \Drupal::service('entity.manager');
@@ -143,4 +142,124 @@ function _wishlist_template_line_item_views_values() {
     }
   }
   return $wishlist_views;
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view_alter().
+ *
+ * @param array $build
+ * @param \Drupal\wishlist_template\Entity\WishlistTemplateInterface $wishlist_template
+ * @param \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display
+ */
+function wishlist_template_wishlist_template_view_alter(array &$build, Drupal\wishlist_template\Entity\WishlistTemplateInterface $wishlist_template, \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display) {
+  $term_view_mode = $wishlist_template->getTaxonomyTermViewMode();
+  $product_list_renderer = $wishlist_template->getProductListRenderer();
+  $product_list_renderer = explode("---",$product_list_renderer);
+  $product_list_view = $product_list_renderer[0];
+  $product_list_display = $product_list_renderer[1];
+  $view_builder = \Drupal::entityManager()->getViewBuilder('taxonomy_term');
+  /**
+   * @var \Drupal\commerce_wishlist\WishlistProviderInterface $wishlist_provider
+   * @var \Drupal\Core\Session\AccountProxy $current_account
+   * @var \Drupal\Core\Session\AccountProxy $current_account
+   **/
+  $wishlist_provider = \Drupal::service('commerce_wishlist.wishlist_provider');
+  $current_account = \Drupal::service('current_user');
+  $wishlists = $wishlist_provider->getWishlists($current_account);
+
+  /** @var \Drupal\commerce_order\Entity\OrderInterface $wishlist */
+  $wishlist = false;
+  if ($wishlists) {
+    // Look for wishlist template fields
+    foreach ($wishlists as $wishlist) {
+
+      $fields = array_keys($wishlist->toArray());
+      if (in_array('field_test', $fields)) {
+        // Determine what template is assigned.
+        // @todo remove hardcoded Order entity requirement.
+        $values = $wishlist->get("field_test")->getValue();
+        if ($values[0]['target_id'] == $wishlist_template->id()) {
+          // This order has the same value as the template we're viewing.
+          // Note that $wishlist will remain the order we want to display.
+          break;
+        }
+      }
+      // A wishlist didn't have the field.
+      // If it's the last one, we want the variable to be false.
+      $wishlist = false;
+    }
+  }
+
+  // Assume this wishlist template is rendering a live template.
+  // @todo Perhaps this should be controlled by a setting?
+  // "Show wishlist if current user has a wishlist connected to the template."
+  if ($wishlist !== false) {
+    // Remember, we're building a render array, so let's render this.
+    /**
+     * @var \Drupal\Core\Field\EntityReferenceFieldItemList $terms
+     * @var int $delta
+     * @var \Drupal\taxonomy\Entity\Term $term
+     */
+    $terms = $wishlist_template->get('terms');
+    $build['wishlist_template'] = array(
+      '#type' => 'container',
+    );
+    foreach ($terms->referencedEntities() as $delta => $term) {
+      $build['wishlist_template']['tid-' . $term->id()] = $view_builder->view($term,$term_view_mode);
+
+      // @todo Make the "No results" of the selected view actually work.
+      $product_list = array(
+        '#type' => 'view',
+        '#name' => $product_list_view,
+        '#display_id' => $product_list_display,
+        '#arguments' => array(
+          $wishlist->id(),
+        ),
+      );
+
+      // Create a list of Product variations whose parents have the catalog terms.
+      // Load all products based on variations
+      /** @var \Drupal\commerce_order\Entity\LineItemInterface[] $lineItems */
+      $lineItems = $wishlist->getLineItems();
+      // @todo Make this a static variable.
+      $terms_and_their_variations = array();
+      foreach ($lineItems as $lineItem) {
+        /** @var \Drupal\commerce_product\Entity\ProductVariationInterface $product_variation */
+        $product_variation = $lineItem->getPurchasedEntity();
+        /** @var \Drupal\commerce_product\Entity\ProductInterface $product */
+        $product = $product_variation->getProduct();
+        $product_fields = array_keys($product->getFields());
+        foreach ($product_fields as $product_field) {
+          $field = $product->get($product_field);
+          // Only interested in Entity References that target terms.
+          if ($field->getFieldDefinition()->getType() == "entity_reference" &&
+              $field->getItemDefinition()->getSetting("target_type") == "taxonomy_term") {
+            foreach ($field->getValue() as $product_term) {
+              $terms_and_their_variations[$product_term['target_id']][] = $product_variation->id();
+            }
+          }
+        }
+      }
+
+      // If we have products that reference this term, render them.
+      if (in_array($term->id(),array_keys($terms_and_their_variations))) {
+        $product_list['#arguments'][1] = implode("+",$terms_and_their_variations[$term->id()]);
+      }
+
+      // Render the view / no-results default
+      $build['wishlist_template']['tid-' . $term->id() . '---products'] = $product_list;
+    }
+  } else {
+    // This wishlist template is rendering a preview.
+    $build['wishlist_template'] = array(
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#attributes' => array(
+        'class' => array(
+          'wishlist-template-create'
+        ),
+      ),
+      '#value' => '<a href="/wishlist-template/create/' . $wishlist_template->id() . '">Start Shopping for ' . $wishlist_template->getName() . '</a>',
+    );
+  }
 }
