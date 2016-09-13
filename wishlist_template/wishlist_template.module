@@ -172,16 +172,18 @@ function wishlist_template_wishlist_template_view_alter(array &$build, Drupal\wi
   if ($wishlists) {
     // Look for wishlist template fields
     foreach ($wishlists as $wishlist) {
-
-      $fields = array_keys($wishlist->toArray());
-      if (in_array('field_test', $fields)) {
-        // Determine what template is assigned.
-        // @todo remove hardcoded Order entity requirement.
-        $values = $wishlist->get("field_test")->getValue();
-        if ($values[0]['target_id'] == $wishlist_template->id()) {
-          // This order has the same value as the template we're viewing.
-          // Note that $wishlist will remain the order we want to display.
-          break;
+      $wishlist_fields = array_keys($wishlist->getFields());
+      foreach ($wishlist_fields as $wishlist_field) {
+        $field = $wishlist->get($wishlist_field);
+        // Only interested in Entity References that target terms.
+        if ($field->getFieldDefinition()->getType() == "entity_reference" &&
+            $field->getItemDefinition()->getSetting("target_type") == "wishlist_template") {
+          $values = $field->getValue();
+          if ($values[0]['target_id'] == $wishlist_template->id()) {
+            // This order has the same value as the template we're viewing.
+            // Note that $wishlist will remain the order we want to display.
+            break 2;
+          }
         }
       }
       // A wishlist didn't have the field.
@@ -207,7 +209,6 @@ function wishlist_template_wishlist_template_view_alter(array &$build, Drupal\wi
     foreach ($terms->referencedEntities() as $delta => $term) {
       $build['wishlist_template']['tid-' . $term->id()] = $view_builder->view($term,$term_view_mode);
 
-      // @todo Make the "No results" of the selected view actually work.
       $product_list = array(
         '#type' => 'view',
         '#name' => $product_list_view,
@@ -241,7 +242,7 @@ function wishlist_template_wishlist_template_view_alter(array &$build, Drupal\wi
         }
       }
 
-      // If we have products that reference this term, render them.
+      // If we have product variation parents that reference this term, render them.
       if (in_array($term->id(),array_keys($terms_and_their_variations))) {
         $product_list['#arguments'][1] = implode("+",$terms_and_their_variations[$term->id()]);
       }
@@ -250,16 +251,9 @@ function wishlist_template_wishlist_template_view_alter(array &$build, Drupal\wi
       $build['wishlist_template']['tid-' . $term->id() . '---products'] = $product_list;
     }
   } else {
+    $form = \Drupal::formBuilder()->getForm(\Drupal\wishlist_template\Form\CreateWishlistBasedOnTemplateForm::class, $wishlist_template);
+
     // This wishlist template is rendering a preview.
-    $build['wishlist_template'] = array(
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => array(
-        'class' => array(
-          'wishlist-template-create'
-        ),
-      ),
-      '#value' => '<a href="/wishlist-template/create/' . $wishlist_template->id() . '">Start Shopping for ' . $wishlist_template->getName() . '</a>',
-    );
+    $build['wishlist_template_form'] = $form;
   }
 }
