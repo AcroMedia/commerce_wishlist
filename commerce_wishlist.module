@@ -316,7 +316,7 @@ function commerce_wishlist_add_to_wishlist_form_submit($form, FormStateInterface
   // Determine the order type to use.
   $order_type = $order_resolver->resolve($line_item);
 
-  // Find a store to use.git
+  // Find a store to use.
   $stores = $purchased_entity->getStores();
   if (count($stores) === 1) {
     $store = reset($stores);
