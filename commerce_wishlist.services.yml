@@ -13,8 +13,8 @@ services:
 
   commerce_wishlist.wishlist_manager:
     class: Drupal\commerce_wishlist\WishlistManager
-    arguments: ['@entity_type.manager', '@commerce_wishlist.line_item_matcher', '@event_dispatcher']
+    arguments: ['@entity_type.manager', '@commerce_wishlist.order_item_matcher', '@event_dispatcher']
 
-  commerce_wishlist.line_item_matcher:
-      class: Drupal\commerce_wishlist\LineItemMatcher
+  commerce_wishlist.order_item_matcher:
+      class: Drupal\commerce_wishlist\OrderItemMatcher
       arguments: ['@event_dispatcher']

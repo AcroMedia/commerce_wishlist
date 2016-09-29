@@ -14,7 +14,7 @@ use Drupal\Core\Link;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides the line item add to cart form.
+ * Provides the order item add to cart form.
  */
 class AddToWishlistForm extends ContentEntityForm {
 
@@ -115,19 +115,19 @@ class AddToWishlistForm extends ContentEntityForm {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
 
-    /** @var \Drupal\commerce_order\Entity\LineItemInterface $line_item */
-    $line_item = $this->entity;
+    /** @var \Drupal\commerce_order\Entity\OrderItemInterface $order_item */
+    $order_item = $this->entity;
     /** @var \Drupal\commerce\PurchasableEntityInterface $purchased_entity */
-    $purchased_entity = $line_item->getPurchasedEntity();
+    $purchased_entity = $order_item->getPurchasedEntity();
 
-    $order_type = $this->orderTypeResolver->resolve($line_item);
+    $order_type = $this->orderTypeResolver->resolve($order_item);
 
     $store = $this->selectStore($purchased_entity);
     $wishlist = $this->wishlistProvider->getWishlist($order_type, $store);
     if (!$wishlist) {
       $wishlist = $this->wishlistProvider->createWishlist($order_type, $store);
     }
-    $this->wishlistManager->addLineItem($wishlist, $line_item, $form_state->get(['settings', 'combine']));
+    $this->wishlistManager->addOrderItem($wishlist, $order_item, $form_state->get(['settings', 'combine']));
 
     drupal_set_message($this->t('@entity added to @wishlist-link.', [
       '@entity' => $purchased_entity->label(),
@@ -139,10 +139,10 @@ class AddToWishlistForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildEntity(array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\commerce_order\Entity\LineItemInterface $entity */
+    /** @var \Drupal\commerce_order\Entity\OrderItemInterface $entity */
     $entity = parent::buildEntity($form, $form_state);
     // Now that the purchased entity is set, populate the title and price.
-    $entity->setTitle($entity->getPurchasedEntity()->getLineItemTitle());
+    $entity->setTitle($entity->getPurchasedEntity()->getOrderItemTitle());
     // @todo Remove once the price calculation is in place.
     $entity->unit_price = $entity->getPurchasedEntity()->price;
 

@@ -53,7 +53,7 @@ class WishlistController extends ControllerBase {
     $wishlists = $this->wishlistProvider->getWishlists();
     $wishlists = array_filter($wishlists, function ($wishlist) {
       // Wishlists are orders and orders have all kinds of methods.
-      return $wishlist->hasLineItems();
+      return $wishlist->hasItems();
     });
     if (!empty($wishlists)) {
       $wishlist_views = $this->getWishlistViews($wishlists);
