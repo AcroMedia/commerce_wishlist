@@ -8,13 +8,13 @@ Architecturally, the third version of Commerce Wishlist for Drupal 7 was convert
 called a "Wishlist." After discussion with Nick Vahalik and Matt Glaman, it was decided that the Drupal 8 port of the
 Wishlist module would make the same architectural decision: Wishlists will be orders.
 
-A special order type will be used to store the line items that track product variationss on the list. The first
+A special order type will be used to store the order items that track product variationss on the list. The first
 iteration will closely model the Add-to-cart workflow with exceptions made to be able to co-exist with the add-to-cart
 button.
 
-The architectural decision to use line items allows us the opportunity in the future to allow administrators to add any
+The architectural decision to use order items allows us the opportunity in the future to allow administrators to add any
 kind of customer-facing field to the wishlist item. This would allow for wishlist notes, links to external products, 
-prioritization, anything you can imagine saving next to a desired product. **Note**: While fields may be added to line
+prioritization, anything you can imagine saving next to a desired product. **Note**: While fields may be added to order
 items, the ability for the customers to create/modify those fields is likely not available quite yet.
 
 ### User Stories
@@ -49,7 +49,7 @@ items, the ability for the customers to create/modify those fields is likely not
   * As an **anonymous user**, I can register and my wishlist will be saved to my account.
   * As an **anonymous user**, I can login and my wishlist will be saved to my account.
 * **Customers**
-  * As a **customer**, I can add or delete information stored in line items on my wishlist.
+  * As a **customer**, I can add or delete information stored in order items on my wishlist.
   * As a **customer**, I can view a list of my wishlists by accessing a menu link.
   * As a **customer**, I can create, update, and delete wishlists.
     * A customer MUST have a "default" wishlist.
@@ -64,7 +64,7 @@ items, the ability for the customers to create/modify those fields is likely not
     * Limited sharing with a passcode MAY be enabled.
   * As a **customer**, I will see products from my wishlist(s) in a block underneath the cart.
 * **Administrators**
-  * As an **administrator**, I can mark line item fields to be included as customer-editable on wishlists.
+  * As an **administrator**, I can mark order item fields to be included as customer-editable on wishlists.
   * As an **administrator**, I can choose which order types are treated as wishlists.
   * As an **administrator**, I can add a link to the menu system that links to a customer's wishlist.
     * The link MUST be used as a menu link token in the form of `<wishlist-dashboard>` 
