@@ -121,7 +121,7 @@ class WishlistManager implements WishlistManagerInterface {
 
     // @todo: figure out why this produces a fatal error...
     // $event = new WishlistEntityAddEvent($wishlist, $purchased_entity, $quantity, $order_item);
-    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ENTITY_ADD, $event);
+    // $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ENTITY_ADD, $event);
     if ($needs_wishlist_save && $save_wishlist) {
       $wishlist->save();
     }
