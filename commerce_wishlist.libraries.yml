@@ -1,5 +1,0 @@
-form:
-  version: VERSION
-  css:
-    layout:
-      css/commerce_wishlist.module.css: {}
