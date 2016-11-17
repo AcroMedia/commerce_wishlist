@@ -2,85 +2,78 @@
 
 namespace Drupal\commerce_wishlist;
 
-use Drupal\commerce_store\Entity\StoreInterface;
 use Drupal\Core\Session\AccountInterface;
 
 /**
  * Creates and loads wishlists for anonymous and authenticated users.
  *
- * @see \Drupal\commerce_cart\CartProviderInterface
- * @see \Drupal\commerce_cart\CartSessionInterface
  * @see \Drupal\commerce_wishlist\WishlistSessionInterface
  */
 interface WishlistProviderInterface {
 
   /**
-   * Creates a wishlist order for the given store and user.
+   * Creates a wishlist entity for the given user.
    *
-   * @param string $order_type
-   *   The order type ID.
-   * @param \Drupal\commerce_store\Entity\StoreInterface $store
-   *   The store.
+   * @param string $wishlist_type
+   *   The wishlist type ID.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user. If empty, the current user is assumed.
+   * @param string $name
+   *   The wishlist name. Defaults to t('Wishlist').
    *
-   * @return \Drupal\commerce_order\Entity\OrderInterface
-   *   The created wishlist order.
+   * @return \Drupal\commerce_wishlist\Entity\WishlistInterface
+   *   The created wishlist entity.
    *
    * @throws \Drupal\commerce_wishlist\Exception\DuplicateWishlistException
    *   When a wishlist with the given criteria already exists.
    */
-  public function createWishlist($order_type, StoreInterface $store, AccountInterface $account = NULL);
+  public function createWishlist($wishlist_type, AccountInterface $account = NULL, $name = NULL);
 
   /**
-   * Gets the wishlist order for the given store and user.
+   * Gets the wishlist entity for the given user.
    *
-   * @param string $order_type
-   *   The order type ID.
-   * @param \Drupal\commerce_store\Entity\StoreInterface $store
-   *   The store.
+   * @param string $wishlist_type
+   *   The wishlist type ID.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user. If empty, the current user is assumed.
    *
-   * @return \Drupal\commerce_order\Entity\OrderInterface|null
-   *   The wishlist order, or NULL if none found.
+   * @return \Drupal\commerce_wishlist\Entity\WishlistInterface|null
+   *   The wishlist entity, or NULL if none found.
    */
-  public function getWishlist($order_type, StoreInterface $store, AccountInterface $account = NULL);
+  public function getWishlist($wishlist_type, AccountInterface $account = NULL);
 
   /**
-   * Gets the wishlist order ID for the given store and user.
+   * Gets the wishlist entity ID for the given user.
    *
-   * @param string $order_type
-   *   The order type ID.
-   * @param \Drupal\commerce_store\Entity\StoreInterface $store
-   *   The store.
+   * @param string $wishlist_type
+   *   The wishlist type ID.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user. If empty, the current user is assumed.
    *
    * @return int|null
-   *   The wishlist order ID, or NULL if none found.
+   *   The wishlist entity ID, or NULL if none found.
    */
-  public function getWishlistId($order_type, StoreInterface $store, AccountInterface $account = NULL);
+  public function getWishlistId($wishlist_type, AccountInterface $account = NULL);
 
   /**
-   * Gets all wishlist orders for the given user.
+   * Gets all wishlist entities for the given user.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user. If empty, the current user is assumed.
    *
-   * @return \Drupal\commerce_order\Entity\OrderInterface[]
-   *   A list of wishlist orders.
+   * @return \Drupal\commerce_wishlist\Entity\WishlistInterface[]
+   *   A list of wishlist entities.
    */
   public function getWishlists(AccountInterface $account = NULL);
 
   /**
-   * Gets all wishlist order ids for the given user.
+   * Gets all wishlist entity ids for the given user.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The user. If empty, the current user is assumed.
    *
    * @return int[]
-   *   A list of wishlist orders ids.
+   *   A list of wishlist entity ids.
    */
   public function getWishlistIds(AccountInterface $account = NULL);
 

@@ -3,38 +3,37 @@
 namespace Drupal\commerce_wishlist;
 
 use Drupal\commerce\PurchasableEntityInterface;
-use Drupal\commerce_order\Entity\OrderInterface;
-use Drupal\commerce_order\Entity\OrderItemInterface;
+use Drupal\commerce_wishlist\Entity\WishlistInterface;
+use Drupal\commerce_wishlist\Entity\WishlistItemInterface;
 use Drupal\commerce_wishlist\Event\WishlistEvents;
 use Drupal\commerce_wishlist\Event\WishlistEmptyEvent;
 use Drupal\commerce_wishlist\Event\WishlistEntityAddEvent;
-use Drupal\commerce_wishlist\Event\WishlistOrderItemRemoveEvent;
-use Drupal\commerce_wishlist\Event\WishlistOrderItemUpdateEvent;
-use Drupal\commerce_price\Calculator;
+use Drupal\commerce_wishlist\Event\WishlistItemRemoveEvent;
+use Drupal\commerce_wishlist\Event\WishlistItemUpdateEvent;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Default implementation of the wishlist manager.
  *
- * Fires its own events, different from the order entity events by being a
+ * Fires its own events, different from the wishlist entity events by being a
  * result of user interaction (add to wishlist form, wishlist view, etc).
  */
 class WishlistManager implements WishlistManagerInterface {
 
   /**
-   * The order item storage.
+   * The wishlist item storage.
    *
-   * @var \Drupal\commerce_order\OrderItemStorageInterface
+   * @var \Drupal\commerce_wishlist\WishlistItemStorageInterface
    */
-  protected $orderItemStorage;
+  protected $wishlistItemStorage;
 
   /**
-   * The order item matcher.
+   * The wishlist item matcher.
    *
-   * @var \Drupal\commerce_wishlist\OrderItemMatcherInterface
+   * @var \Drupal\commerce_wishlist\WishlistItemMatcherInterface
    */
-  protected $orderItemMatcher;
+  protected $wishlistItemMatcher;
 
   /**
    * The event dispatcher.
@@ -48,28 +47,28 @@ class WishlistManager implements WishlistManagerInterface {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\commerce_wishlist\OrderItemMatcherInterface $order_item_matcher
-   *   The order item matcher.
+   * @param \Drupal\commerce_wishlist\WishlistItemMatcherInterface $wishlist_item_matcher
+   *   The wishlist item matcher.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, OrderItemMatcherInterface $order_item_matcher, EventDispatcherInterface $event_dispatcher) {
-    $this->orderItemStorage = $entity_type_manager->getStorage('commerce_order_item');
-    $this->orderItemMatcher = $order_item_matcher;
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, WishlistItemMatcherInterface $wishlist_item_matcher, EventDispatcherInterface $event_dispatcher) {
+    $this->wishlistItemStorage = $entity_type_manager->getStorage('commerce_wishlist_item');
+    $this->wishlistItemMatcher = $wishlist_item_matcher;
     $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function emptyWishlist(OrderInterface $wishlist, $save_wishlist = TRUE) {
-    $order_items = $wishlist->getItems();
-    foreach ($order_items as $order_item) {
-      $order_item->delete();
+  public function emptyWishlist(WishlistInterface $wishlist, $save_wishlist = TRUE) {
+    $wishlist_items = $wishlist->getItems();
+    foreach ($wishlist_items as $wishlist_item) {
+      $wishlist_item->delete();
     }
     $wishlist->setItems([]);
 
-    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_EMPTY, new WishlistEmptyEvent($wishlist, $order_items));
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_EMPTY, new WishlistEmptyEvent($wishlist, $wishlist_items));
     if ($save_wishlist) {
       $wishlist->save();
     }
@@ -78,75 +77,72 @@ class WishlistManager implements WishlistManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function addEntity(OrderInterface $wishlist, PurchasableEntityInterface $entity, $quantity = 1, $combine = TRUE, $save_wishlist = TRUE) {
-    $order_item = $this->createOrderItem($entity, $quantity);
-    return $this->addOrderItem($wishlist, $order_item, $combine);
+  public function addEntity(WishlistInterface $wishlist, PurchasableEntityInterface $entity, $quantity = 1, $combine = TRUE, $save_wishlist = TRUE) {
+    $wishlist_item = $this->createWishlistItem($entity, $quantity);
+    return $this->addWishlistItem($wishlist, $wishlist_item, $combine, $save_wishlist);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function createOrderItem(PurchasableEntityInterface $entity, $quantity = 1) {
-    $order_item = $this->orderItemStorage->createFromPurchasableEntity($entity, [
+  public function createWishlistItem(PurchasableEntityInterface $entity, $quantity = 1) {
+    $wishlist_item = $this->wishlistItemStorage->createFromPurchasableEntity($entity, [
       'quantity' => $quantity,
-      // @todo Remove once the price calculation is in place.
-      // @see CartManager.php ->createOrderItem.
-      'unit_price' => $entity->getPrice(),
     ]);
 
-    return $order_item;
+    return $wishlist_item;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function addOrderItem(OrderInterface $wishlist, OrderItemInterface $order_item, $combine = TRUE, $save_wishlist = TRUE) {
-    $purchased_entity = $order_item->getPurchasedEntity();
-    $quantity = $order_item->getQuantity();
-    $matching_order_item = NULL;
+  public function addWishlistItem(WishlistInterface $wishlist, WishlistItemInterface $wishlist_item, $combine = TRUE, $save_wishlist = TRUE) {
+    $purchasable_entity = $wishlist_item->getPurchasableEntity();
+    $quantity = $wishlist_item->getQuantity();
+    $matching_wishlist_item = NULL;
     if ($combine) {
-      $matching_order_item = $this->orderItemMatcher->match($order_item, $wishlist->getItems());
+      $matching_wishlist_item = $this->wishlistItemMatcher->match($wishlist_item, $wishlist->getItems());
     }
-    $needs_wishlist_save = FALSE;
-    if ($matching_order_item) {
-      $new_quantity = Calculator::add($matching_order_item->getQuantity(), $quantity);
-      $matching_order_item->setQuantity($new_quantity);
-      $matching_order_item->save();
+    if ($matching_wishlist_item) {
+      $new_quantity = bcadd($matching_wishlist_item->getQuantity(), $quantity, 0);
+      $matching_wishlist_item->setQuantity($new_quantity);
+      $matching_wishlist_item->save();
     }
     else {
-      $order_item->save();
-      $wishlist->addItem($order_item);
-      $needs_wishlist_save = TRUE;
+      $wishlist_item->save();
+      $wishlist->addItem($wishlist_item);
     }
 
-    // @todo: figure out why this produces a fatal error...
-    // $event = new WishlistEntityAddEvent($wishlist, $purchased_entity, $quantity, $order_item);
-    // $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ENTITY_ADD, $event);
-    if ($needs_wishlist_save && $save_wishlist) {
+    $event = new WishlistEntityAddEvent($wishlist, $purchasable_entity, $quantity, $wishlist_item);
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ENTITY_ADD, $event);
+    if ($save_wishlist) {
       $wishlist->save();
     }
 
-    return $order_item;
+    return $wishlist_item;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function updateOrderItem(OrderInterface $wishlist, OrderItemInterface $order_item) {
-    /** @var \Drupal\commerce_order\Entity\OrderItemInterface $original_order_item */
-    $original_order_item = $this->orderItemStorage->loadUnchanged($order_item->id());
-    $order_item->save();
-    $event = new WishlistOrderItemUpdateEvent($wishlist, $order_item, $original_order_item);
-    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ORDER_ITEM_UPDATE, $event);
+  public function updateWishlistItem(WishlistInterface $wishlist, WishlistItemInterface $wishlist_item, $save_wishlist = TRUE) {
+    /** @var \Drupal\commerce_wishlist\Entity\WishlistItemInterface $original_wishlist_item */
+    $original_wishlist_item = $this->wishlistItemStorage->loadUnchanged($wishlist_item->id());
+    $wishlist_item->save();
+    $event = new WishlistItemUpdateEvent($wishlist, $wishlist_item, $original_wishlist_item);
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ITEM_UPDATE, $event);
+    if ($save_wishlist) {
+      $wishlist->save();
+    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function removeOrderItem(OrderInterface $wishlist, OrderItemInterface $order_item, $save_wishlist = TRUE) {
-    $order_item->delete();
-    $wishlist->removeItem($order_item);
-    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ORDER_ITEM_REMOVE, new WishlistOrderItemRemoveEvent($wishlist, $order_item));
+  public function removeWishlistItem(WishlistInterface $wishlist, WishlistItemInterface $wishlist_item, $save_wishlist = TRUE) {
+    $wishlist_item->delete();
+    $wishlist->removeItem($wishlist_item);
+    $this->eventDispatcher->dispatch(WishlistEvents::WISHLIST_ITEM_REMOVE, new WishlistItemRemoveEvent($wishlist, $wishlist_item));
     if ($save_wishlist) {
       $wishlist->save();
     }

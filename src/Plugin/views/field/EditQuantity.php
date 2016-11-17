@@ -10,11 +10,11 @@ use Drupal\views\ResultRow;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines a form element for editing the order item quantity.
+ * Defines a form element for editing the wishlist item quantity.
  *
- * @ViewsField("commerce_order_item_edit_quantity_wishlist")
+ * @ViewsField("commerce_wishlist_item_edit_quantity")
  */
-class EditWishlistQuantity extends FieldPluginBase {
+class EditQuantity extends FieldPluginBase {
 
   use UncacheableFieldHandlerTrait;
 
@@ -88,8 +88,9 @@ class EditWishlistQuantity extends FieldPluginBase {
 
     $form[$this->options['id']]['#tree'] = TRUE;
     foreach ($this->view->result as $row_index => $row) {
-      $order_item = $this->getEntity($row);
-      $quantity = $order_item->getQuantity();
+      /** @var \Drupal\commerce_wishlist\Entity\WishlistItemInterface $wishlist_item */
+      $wishlist_item = $this->getEntity($row);
+      $quantity = $wishlist_item->getQuantity();
 
       $form[$this->options['id']][$row_index] = [
         '#type' => 'number',
@@ -117,12 +118,12 @@ class EditWishlistQuantity extends FieldPluginBase {
   public function viewsFormSubmit(&$form, FormStateInterface $form_state) {
     $quantities = $form_state->getValue($this->options['id']);
     foreach ($quantities as $row_index => $quantity) {
-      /** @var \Drupal\commerce_order\Entity\OrderItemInterface $order_item */
-      $order_item = $this->getEntity($this->view->result[$row_index]);
-      if ($order_item->getQuantity() != $quantity) {
-        $order_item->setQuantity($quantity);
-        $order = $order_item->getOrder();
-        $this->wishlistManager->updateOrderItem($order, $order_item);
+      /** @var \Drupal\commerce_wishlist\Entity\WishlistItemInterface $wishlist_item */
+      $wishlist_item = $this->getEntity($this->view->result[$row_index]);
+      if ($wishlist_item->getQuantity() != $quantity) {
+        $wishlist_item->setQuantity($quantity);
+        $wishlist = $wishlist_item->getWishlist();
+        $this->wishlistManager->updateWishlistItem($wishlist, $wishlist_item);
       }
     }
   }

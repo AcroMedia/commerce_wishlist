@@ -2,7 +2,7 @@
 
 namespace Drupal\commerce_wishlist\Event;
 
-use Drupal\commerce_order\Entity\OrderInterface;
+use Drupal\commerce_wishlist\Entity\WishlistInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\Event;
 
@@ -14,9 +14,9 @@ use Symfony\Component\EventDispatcher\Event;
 class WishlistAssignEvent extends Event {
 
   /**
-   * The wishlist order.
+   * The wishlist entity.
    *
-   * @var \Drupal\commerce_order\Entity\OrderInterface
+   * @var \Drupal\commerce_wishlist\Entity\WishlistInterface
    */
   protected $wishlist;
 
@@ -30,21 +30,21 @@ class WishlistAssignEvent extends Event {
   /**
    * Constructs a new WishlistAssignEvent.
    *
-   * @param \Drupal\commerce_order\Entity\OrderInterface $wishlist
-   *   The wishlist order.
+   * @param \Drupal\commerce_wishlist\Entity\WishlistInterface $wishlist
+   *   The wishlist entity.
    * @param \Drupal\user\UserInterface $account
    *   The user account.
    */
-  public function __construct(OrderInterface $wishlist, UserInterface $account) {
+  public function __construct(WishlistInterface $wishlist, UserInterface $account) {
     $this->wishlist = $wishlist;
     $this->account = $account;
   }
 
   /**
-   * Gets the wishlist order.
+   * Gets the wishlist entity.
    *
-   * @return \Drupal\commerce_order\Entity\OrderInterface
-   *   The wishlist order.
+   * @return \Drupal\commerce_wishlist\Entity\WishlistInterface
+   *   The wishlist entity.
    */
   public function getWishlist() {
     return $this->wishlist;

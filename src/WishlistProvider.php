@@ -3,7 +3,6 @@
 namespace Drupal\commerce_wishlist;
 
 use Drupal\commerce_wishlist\Exception\DuplicateWishlistException;
-use Drupal\commerce_store\Entity\StoreInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 
@@ -13,11 +12,11 @@ use Drupal\Core\Session\AccountInterface;
 class WishlistProvider implements WishlistProviderInterface {
 
   /**
-   * The order storage.
+   * The wishlist storage.
    *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
-  protected $orderStorage;
+  protected $wishlistStorage;
 
   /**
    * The current user.
@@ -34,16 +33,15 @@ class WishlistProvider implements WishlistProviderInterface {
   protected $wishlistSession;
 
   /**
-   * The loaded wishlist data, keyed by wishlist order ID, then grouped by uid.
+   * The loaded wishlist data, keyed by wishlist ID, then grouped by uid.
    *
    * Each data item is an array with the following keys:
-   * - type: The order type.
-   * - store_id: The store ID.
+   * - type: The wishlist type.
    *
    * Example:
    * @code
    * 1 => [
-   *   10 => ['type' => 'default', 'store_id' => '1'],
+   *   10 => ['type' => 'default'],
    * ]
    * @endcode
    *
@@ -62,7 +60,7 @@ class WishlistProvider implements WishlistProviderInterface {
    *   The wishlist session.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, AccountInterface $current_user, WishlistSessionInterface $wishlist_session) {
-    $this->orderStorage = $entity_type_manager->getStorage('commerce_order');
+    $this->wishlistStorage = $entity_type_manager->getStorage('commerce_wishlist');
     $this->currentUser = $current_user;
     $this->wishlistSession = $wishlist_session;
   }
@@ -70,35 +68,33 @@ class WishlistProvider implements WishlistProviderInterface {
   /**
    * {@inheritdoc}
    */
-  public function createWishlist($order_type, StoreInterface $store, AccountInterface $account = NULL) {
+  public function createWishlist($wishlist_type, AccountInterface $account = NULL, $name = NULL) {
     $account = $account ?: $this->currentUser;
     $uid = $account->id();
-    $store_id = $store->id();
-    // @todo Remove this limitation.
-    if ($this->getWishlistId($order_type, $store, $account)) {
-      // Don't allow multiple wishlist orders matching the same criteria.
-      throw new DuplicateWishlistException("A wishlist order for type '$order_type', store '$store_id' and account '$uid' already exists.");
+    // @todo Remove this limitation for bundles allowing multiple wishlists.
+    if ($this->getWishlistId($wishlist_type, $account)) {
+      // Don't allow multiple wishlist entities matching the same criteria.
+      throw new DuplicateWishlistException("A wishlist for type '$wishlist_type' and account '$uid' already exists.");
     }
 
-    // Create the new wishlist order.
-    $wishlist = $this->orderStorage->create([
-      'type' => $order_type,
-      'store_id' => $store_id,
+    // Create the new wishlist entity.
+    $wishlist = $this->wishlistStorage->create([
+      'type' => $wishlist_type,
       'uid' => $uid,
-      'wishlist' => TRUE,
+      'name' => $name ?: t('Wishlist'),
+      // @todo By now, we only support one wishlist per user, so we automatically set it as the default one. In the long run we may need to distinct here.
+      'is_default' => TRUE,
     ]);
     $wishlist->save();
-    // Store the new wishlist order id in the anonymous user's session so that
-    // it can be retrieved on the next page load.
+    // Store the new wishlist id in the anonymous user's session so that it can
+    // be retrieved on the next page load.
     if ($account->isAnonymous()) {
       $this->wishlistSession->addWishlistId($wishlist->id());
     }
-    // Wishlist data has already been loaded, add the new wishlist order to
-    // the list.
+    // Wishlist data has already been loaded, add the new wishlist to the list.
     if (isset($this->wishlistData[$uid])) {
       $this->wishlistData[$uid][$wishlist->id()] = [
-        'type' => $order_type,
-        'store_id' => $store_id,
+        'type' => $wishlist_type,
       ];
     }
 
@@ -108,11 +104,11 @@ class WishlistProvider implements WishlistProviderInterface {
   /**
    * {@inheritdoc}
    */
-  public function getWishlist($order_type, StoreInterface $store, AccountInterface $account = NULL) {
+  public function getWishlist($wishlist_type, AccountInterface $account = NULL) {
     $wishlist = NULL;
-    $wishlist_id = $this->getWishlistId($order_type, $store, $account);
+    $wishlist_id = $this->getWishlistId($wishlist_type, $account);
     if ($wishlist_id) {
-      $wishlist = $this->orderStorage->load($wishlist_id);
+      $wishlist = $this->wishlistStorage->load($wishlist_id);
     }
 
     return $wishlist;
@@ -121,13 +117,12 @@ class WishlistProvider implements WishlistProviderInterface {
   /**
    * {@inheritdoc}
    */
-  public function getWishlistId($order_type, StoreInterface $store, AccountInterface $account = NULL) {
+  public function getWishlistId($wishlist_type, AccountInterface $account = NULL) {
     $wishlist_id = NULL;
     $wishlist_data = $this->loadWishlistData($account);
     if ($wishlist_data) {
       $search = [
-        'type' => $order_type,
-        'store_id' => $store->id(),
+        'type' => $wishlist_type,
       ];
       $wishlist_id = array_search($search, $wishlist_data);
     }
@@ -142,7 +137,7 @@ class WishlistProvider implements WishlistProviderInterface {
     $wishlists = [];
     $wishlist_ids = $this->getWishlistIds($account);
     if ($wishlist_ids) {
-      $wishlists = $this->orderStorage->loadMultiple($wishlist_ids);
+      $wishlists = $this->wishlistStorage->loadMultiple($wishlist_ids);
     }
 
     return $wishlists;
@@ -173,10 +168,10 @@ class WishlistProvider implements WishlistProviderInterface {
     }
 
     if ($account->isAuthenticated()) {
-      $query = $this->orderStorage->getQuery()
-        ->condition('wishlist', TRUE)
+      $query = $this->wishlistStorage->getQuery()
         ->condition('uid', $account->id())
-        ->sort('order_id', 'DESC');
+        ->sort('is_default', 'DESC')
+        ->sort('wishlist_id', 'DESC');
       $wishlist_ids = $query->execute();
     }
     else {
@@ -190,17 +185,16 @@ class WishlistProvider implements WishlistProviderInterface {
     // Getting the wishlist data and validating the wishlist ids received from
     // the session requires loading the entities. This is a performance hit, but
     // it's assumed that these entities would be loaded at one point anyway.
-    /** @var \Drupal\commerce_order\Entity\OrderInterface[] $wishlists */
-    $wishlists = $this->orderStorage->loadMultiple($wishlist_ids);
+    /** @var \Drupal\commerce_wishlist\Entity\WishlistInterface[] $wishlists */
+    $wishlists = $this->wishlistStorage->loadMultiple($wishlist_ids);
     foreach ($wishlists as $wishlist) {
-      if ($wishlist->getOwnerId() != $uid || empty($wishlist->wishlist)) {
-        // Skip orders that are no longer eligible.
+      if ($wishlist->getCustomerId() != $uid) {
+        // Skip wishlists that are no longer eligible.
         continue;
       }
 
       $this->wishlistData[$uid][$wishlist->id()] = [
         'type' => $wishlist->bundle(),
-        'store_id' => $wishlist->getStoreId(),
       ];
     }
 

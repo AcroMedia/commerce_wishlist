@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Default theme implementation to list wishlist types available for creating an
+ * wishlist.
+ *
+ * Available variables:
+ * - types: A list of content types, each with the following properties:
+ *   - add_link: Link to create a piece of content of this type.
+ *   - description: Description of this type of content.
+ *
+ * @see template_preprocess_commerce_wishlist_add_list()
+ *
+ * @ingroup themeable
+ */
+#}
+{% if types is not empty %}
+    <dl class="wishlist-type-list">
+        {% for type in types %}
+            <dt>{{ type.add_link }}</dt>
+            <dd>{{ type.description }}</dd>
+        {% endfor %}
+    </dl>
+{% else %}
+    <p>
+        {% set create_wishlist_type = path('entity.commerce_wishlist_type.add_form') %}
+        {% trans %}
+        You have not created any wishlist types yet. Go to the <a href="{{ create_wishlist_type }}">wishlist type creation page</a> to add a new wishlist type.
+        {% endtrans %}
+    </p>
+{% endif %}

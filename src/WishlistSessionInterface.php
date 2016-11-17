@@ -5,7 +5,7 @@ namespace Drupal\commerce_wishlist;
 /**
  * Stores wishlist ids in the anonymous user's session.
  *
- * Allows the system to keep track of which wishlist orders belong to the
+ * Allows the system to keep track of which wishlist entities belong to the
  * anonymous user. The session is the only available storage in this case, since
  * all anonymous users share the same user id (0).
  *
@@ -14,38 +14,37 @@ namespace Drupal\commerce_wishlist;
 interface WishlistSessionInterface {
 
   /**
-   * Gets all wishlist order ids from the session.
+   * Gets all wishlist ids from the session.
    *
    * @return int[]
-   *   A list of wishlist orders ids.
+   *   A list of wishlist ids.
    */
   public function getWishlistIds();
 
   /**
-   * Adds the given wishlist order id to the session.
+   * Adds the given wishlist ID to the session.
    *
    * @param int $wishlist_id
-   *   The wishlist order ID.
+   *   The wishlist ID.
    */
   public function addWishlistId($wishlist_id);
 
   /**
-   * Checks whether the given wishlist order id exists in the session.
+   * Checks whether the given wishlist ID exists in the session.
    *
    * @param int $wishlist_id
-   *   The wishlist order ID.
+   *   The wishlist ID.
    *
    * @return bool
-   *   TRUE if the given wishlist order id exists in the session, FALSE
-   *   otherwise.
+   *   TRUE if the given wishlist ID exists in the session, FALSE otherwise.
    */
   public function hasWishlistId($wishlist_id);
 
   /**
-   * Deletes the given wishlist order id from the session.
+   * Deletes the given wishlist ID from the session.
    *
    * @param int $wishlist_id
-   *   The wishlist order ID.
+   *   The wishlist ID.
    */
   public function deleteWishlistId($wishlist_id);
 

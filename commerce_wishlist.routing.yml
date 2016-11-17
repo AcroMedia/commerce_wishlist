@@ -5,3 +5,40 @@ commerce_wishlist.page:
     _title: 'Wishlist'
   requirements:
     _permission: 'access wishlist'
+
+entity.commerce_wishlist_type.collection:
+  path: '/admin/commerce/config/wishlist-types'
+  defaults:
+    _entity_list: 'commerce_wishlist_type'
+    _title: 'Wishlist types'
+  requirements:
+    _permission: 'administer commerce_wishlist_type'
+
+entity.commerce_wishlist.collection:
+  path: '/admin/commerce/wishlists'
+  defaults:
+    _entity_list: 'commerce_wishlist'
+    _title: 'Wishlists'
+  requirements:
+    _permission: 'administer commerce_wishlist'
+
+entity.commerce_wishlist.user_view:
+  path: '/user/{user}/wishlists/{commerce_wishlist}'
+  defaults:
+    _entity_view: 'commerce_wishlist.user'
+    _title: 'Wishlist'
+  requirements:
+    _entity_access: 'commerce_wishlist.view'
+  options:
+    parameters:
+      entity:
+        user: 'entity:user'
+        commerce_wishlist: 'entity:commerce_wishlist'
+
+entity.commerce_wishlist_item_type.collection:
+  path: '/admin/commerce/config/wishlist-item-types'
+  defaults:
+    _entity_list: 'commerce_wishlist_item_type'
+    _title: 'Wishlist item types'
+  requirements:
+    _permission: 'administer commerce_wishlist_type'

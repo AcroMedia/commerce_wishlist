@@ -2,81 +2,34 @@
 
 /**
  * @file
- * Implements the wishlist system and add to wishlist features.
+ * Defines the Wishlist entity and associated features.
  */
 
-use Drupal\commerce_order\Entity\OrderInterface;
-use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\commerce_wishlist\Entity\WishlistInterface;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
-use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FormatterInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
-
-/**
- * Implements hook_entity_base_field_info().
- */
-function commerce_wishlist_entity_base_field_info(EntityTypeInterface $entity_type) {
-  if ($entity_type->id() === 'commerce_order') {
-    $fields['wishlist'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Wishlist'))
-      ->setSettings([
-        'on_label' => t('Yes'),
-        'off_label' => t('No'),
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'boolean_checkbox',
-        'settings' => [
-          'display_label' => TRUE,
-        ],
-        'weight' => 20,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDefaultValue(FALSE);
-
-    return $fields;
-  }
-}
-
-/**
- * Implements hook_entity_bundle_create().
- *
- * Creates an 'add_to_wishlist' form display for each new order item type.
- *
- * @todo: Determine if we need an add_to_wishlist display mode for order item
- *        types.
- */
-function commerce_wishlist_entity_bundle_create($entity_type_id, $bundle) {
-  if ($entity_type_id == 'commerce_order_item' && !\Drupal::isConfigSyncing()) {
-    $storage = \Drupal::entityTypeManager()->getStorage('entity_form_display');
-    $form_display = $storage->load('commerce_order_item.' . $bundle . '.add_to_wishlist');
-    if (!$form_display) {
-      /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display */
-      $form_display = $storage->create([
-        'targetEntityType' => 'commerce_order_item',
-        'bundle' => $bundle,
-        'mode' => 'add_to_wishlist',
-        'status' => TRUE,
-      ]);
-      // Hide the unit price by default.
-      $form_display->removeComponent('unit_price');
-      $form_display->save();
-    }
-  }
-}
-
-/**
- * Implements hook_entity_type_build().
- */
-function commerce_wishlist_entity_type_build(array &$entity_types) {
-  $entity_types['commerce_order_item']->setFormClass('add_to_wishlist', '\Drupal\commerce_wishlist\Form\AddToWishlistForm');
-}
-
+use Drupal\Core\Render\Element;
+use Drupal\Core\Session\AnonymousUserSession;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 
 /**
  * Implements hook_user_login().
  */
 function commerce_wishlist_user_login($account) {
-  \Drupal::service('commerce_wishlist.wishlist_assignment')->assignAll($account);
+  /** @var \Drupal\commerce_wishlist\WishlistProviderInterface $wishlist_provider */
+  $wishlist_provider = \Drupal::service('commerce_wishlist.wishlist_provider');
+  /** @var \Drupal\commerce_wishlist\WishlistAssignmentInterface $wishlist_assignment */
+  $wishlist_assignment = \Drupal::service('commerce_wishlist.wishlist_assignment');
+
+  // Assign the anonymous user's wishlists to the logged-in account.
+  // This will only affect the wishlists that are in the user's session.
+  $anonymous = new AnonymousUserSession();
+  $wishlists = $wishlist_provider->getWishlists($anonymous);
+  $wishlist_assignment->assignMultiple($wishlists, $account);
 }
 
 /**
@@ -84,67 +37,179 @@ function commerce_wishlist_user_login($account) {
  *
  * Removes deleted wishlists from the anonymous user's session.
  */
-function commerce_wishlist_commerce_order_delete(OrderInterface $order) {
-  if (!empty($order->wishlist)) {
-    \Drupal::service('commerce_wishlist.wishlist_session')->deleteWishlistId($order->id());
-  }
+function commerce_wishlist_commerce_wishlist_delete(WishlistInterface $wishlist) {
+  /** @var \Drupal\commerce_wishlist\WishlistSessionInterface $wishlist_session */
+  $wishlist_session = \Drupal::service('commerce_wishlist.wishlist_session');
+  $wishlist_session->deleteWishlistId($wishlist->id());
 }
 
 /**
- * Implements hook_form_FORM_ID_alter() for 'entity_form_display_edit_form'.
+ * Implements hook_theme().
+ */
+function commerce_wishlist_theme($existing, $type, $theme, $path) {
+  return [
+    'commerce_wishlist' => [
+      'render element' => 'elements',
+    ],
+    'commerce_wishlist__user' => [
+      'base hook' => 'commerce_wishlist',
+      'render element' => 'elements',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
  *
- * Hides irrelevant purchased_entity widgets on the add_to_wishlist order item
- * form display.
+ * - Changes the label of the purchasable_entity field to the label of the
+ *   target type (e.g. 'Product variation').
+ * - Forbids editing the purchasable_entity once the wishlist item is no longer new.
+ */
+function commerce_wishlist_field_widget_form_alter(&$element, FormStateInterface $form_state, $context) {
+  /** @var \Drupal\Core\Field\FieldItemListInterface $context ['items'] */
+  /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
+  $field_definition = $context['items']->getFieldDefinition();
+  $field_name = $field_definition->getName();
+  $entity_type = $field_definition->getTargetEntityTypeId();
+  if ($field_name == 'purchasable_entity' && $entity_type == 'commerce_wishlist_item') {
+    if (!empty($element['target_id']['#target_type'])) {
+      $target_type = \Drupal::entityTypeManager()
+        ->getDefinition($element['target_id']['#target_type']);
+      $element['target_id']['#title'] = $target_type->getLabel();
+      if (!$context['items']->getEntity()->isNew()) {
+        $element['#disabled'] = TRUE;
+      }
+    }
+  }
+}
+
+/**
+ * Prepares variables for wishlist templates.
  *
- * @todo: Unnecessary for wishlist, but part of the scaffolding effort for now.
+ * Default template: commerce-wishlist.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing rendered fields.
+ *   - attributes: HTML attributes for the containing element.
  */
-function commerce_wishlist_form_entity_form_display_edit_form_alter(array &$form, FormStateInterface $form_state) {
-  /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
-  $entity = $form_state->getFormObject()->getEntity();
-  if ($form['#entity_type'] == 'commerce_order_item' && $entity->getMode() == 'add_to_cart') {
-    $options = &$form['fields']['purchased_entity']['plugin']['type']['#options'];
-    unset($options['entity_reference_autocomplete_tags']);
-    unset($options['entity_reference_autocomplete']);
-    unset($options['inline_entity_form_complex']);
+function template_preprocess_commerce_wishlist(&$variables) {
+  /** @var Drupal\commerce_wishlist\Entity\WishlistInterface $wishlist */
+  $wishlist = $variables['elements']['#commerce_wishlist'];
+
+  $variables['wishlist_entity'] = $wishlist;
+  $variables['wishlist'] = [];
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['wishlist'][$key] = $variables['elements'][$key];
   }
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter() for 'commerce_order_form'.
+ * Implements hook_theme_suggestions_commerce_wishlist().
  */
-function commerce_wishlist_form_commerce_order_form_alter(array &$form, FormStateInterface $form_state) {
-  if (isset($form['wishlist'])) {
-    /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
-    $order = $form_state->getFormObject()->getEntity();
-    if ($order->getState()->value == 'draft') {
-      // Move the cart element to the bottom of the meta sidebar container.
-      $form['wishlist']['#group'] = 'meta';
-      $form['wishlist']['#weight'] = 101;
-    }
-    else {
-      // Only draft orders can be wishlists.
-      $form['wishlist']['#type'] = 'hidden';
-      $form['#default_value'] = FALSE;
-    }
+function commerce_wishlist_theme_suggestions_commerce_wishlist(array $variables) {
+  return _commerce_entity_theme_suggestions('commerce_wishlist', $variables);
+}
+
+/**
+ * Adds the default wishlist_items field to an wishlist type.
+ *
+ * wishlist items can't be a base field because the Views integration is broken.
+ * Instead, it is created as a configurable field for each wishlist type.
+ *
+ * @param \Drupal\commerce_wishlist\Entity\WishlistTypeInterface $wishlist_type
+ *   The wishlist type.
+ */
+function commerce_wishlist_add_wishlist_items_field($wishlist_type) {
+  $field_storage = FieldStorageConfig::loadByName('commerce_wishlist', 'wishlist_items');
+  $field = FieldConfig::loadByName('commerce_wishlist', $wishlist_type->id(), 'wishlist_items');
+  if (empty($field_storage)) {
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => 'wishlist_items',
+      'entity_type' => 'commerce_wishlist',
+      'type' => 'entity_reference',
+      'cardinality' => FieldStorageConfig::CARDINALITY_UNLIMITED,
+      'settings' => [
+        'target_type' => 'commerce_wishlist_item',
+      ],
+      'locked' => TRUE,
+      'translatable' => FALSE,
+    ]);
+    $field_storage->save();
+  }
+  if (empty($field)) {
+    $field = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $wishlist_type->id(),
+      'label' => 'Wishlist items',
+      'required' => TRUE,
+      'settings' => [
+        'handler' => 'default',
+        'handler_settings' => [],
+      ],
+      'translatable' => FALSE,
+    ]);
+    $field->save();
+
+    $view_display = commerce_get_entity_display('commerce_wishlist', $wishlist_type->id(), 'view');
+    $view_display->setComponent('wishlist_items', [
+      'type' => 'commerce_wishlist_item_table',
+      'weight' => 0,
+    ]);
+    $view_display->save();
+
+    $form_display = commerce_get_entity_display('commerce_wishlist', $wishlist_type->id(), 'form');
+    $form_display->setComponent('wishlist_items', [
+      'type' => 'inline_entity_form_complex',
+      'weight' => 0,
+      'settings' => [
+        'override_labels' => TRUE,
+        'label_singular' => 'wishlist item',
+        'label_plural' => 'wishlist items',
+      ],
+    ]);
+    $form_display->save();
   }
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter() for 'commerce_order_type_form'.
+ * Implements hook_views_data_alter().
  */
-function commerce_wishlist_form_commerce_order_type_form_alter(array &$form, FormStateInterface $form_state) {
-  $order_type = $form_state->getFormObject()->getEntity();
-  $wishlist_form_view = $order_type->getThirdPartySetting('commerce_wishlist', 'wishlist_form_view', 'commerce_cart_form');
-  $refresh_mode = $order_type->getThirdPartySetting('commerce_wishlist', 'refresh_mode', 'owner_only');
-  $refresh_frequency = $order_type->getThirdPartySetting('commerce_wishlist', 'refresh_frequency', 30);
-  // Prepare a list of views tagged 'commerce_wishlist_form'.
-  $view_storage = \Drupal::entityTypeManager()->getStorage('view');
-  $available_form_views = [];
-  foreach ($view_storage->loadMultiple() as $view) {
-    if (strpos($view->get('tag'), 'commerce_wishlist_form') !== FALSE) {
-      $available_form_views[$view->id()] = $view->label();
-    }
-  }
+function commerce_wishlist_views_data_alter(array &$data) {
+  $data['commerce_wishlist_item']['edit_quantity']['field'] = [
+    'title' => t('Wishlist quantity text field'),
+    'help' => t('Adds a text field for editing the quantity.'),
+    'id' => 'commerce_wishlist_item_edit_quantity',
+  ];
+
+  $data['commerce_wishlist_item']['remove_button']['field'] = [
+    'title' => t('Remove button'),
+    'help' => t('Adds a button for removing the wishlist item.'),
+    'id' => 'commerce_wishlist_item_remove_button',
+  ];
+
+  $data['commerce_wishlist_item']['move_to_cart']['field'] = [
+    'title' => t('Move to cart button'),
+    'help' => t('Adds a button for moving the wishlist item to the shopping cart.'),
+    'id' => 'commerce_wishlist_item_move_to_cart',
+  ];
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for 'commerce_product_variation_type_form'.
+ */
+function commerce_wishlist_form_commerce_product_variation_type_form_alter(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_product\Entity\ProductVariationTypeInterface $commerce_product_variation_type */
+  $commerce_product_variation_type = $form_state->getFormObject()->getEntity();
+  $wishlist_item_type = $commerce_product_variation_type->getThirdPartySetting('commerce_wishlist', 'wishlist_item_type', 'default');
+
+  // Prepare the list of wishlist item types.
+  $wishlist_item_types = \Drupal::entityTypeManager()->getStorage('commerce_wishlist_item_type')
+    ->loadMultiple();
+  $wishlist_item_types = array_map(function($type) {
+    /** @var \Drupal\commerce_wishlist\Entity\WishlistItemTypeInterface $wishlist_item_type */
+    return $type->label();
+  }, $wishlist_item_types);
 
   $form['commerce_wishlist'] = [
     '#type' => 'details',
@@ -153,46 +218,52 @@ function commerce_wishlist_form_commerce_order_type_form_alter(array &$form, For
     '#open' => TRUE,
     '#collapsible' => TRUE,
   ];
-  $form['commerce_wishlist']['wishlist_form_view'] = [
+  $form['commerce_wishlist']['wishlist_item_type'] = [
     '#type' => 'select',
-    '#title' => t('Wishlist form view'),
-    '#options' => $available_form_views,
-    '#default_value' => $wishlist_form_view,
+    '#title' => t('Wishlist item type'),
+    '#options' => $wishlist_item_types,
+    '#default_value' => $wishlist_item_type,
   ];
-
-  $form['commerce_wishlist']['refresh_intro'] = [
-    '#markup' => '<p>' . t('These settings let you control how wishlists are refreshed, the process during which order item prices are recalculated.') . '</p>',
-  ];
-  $form['commerce_wishlist']['refresh_mode'] = [
-    '#type' => 'radios',
-    '#title' => t('Wishlist refresh mode'),
-    '#options' => [
-      'always' => t('Refresh a wishlist when it is loaded regardless of who it belongs to.'),
-      'owner_only' => t('Only refresh a wishlist when it is loaded if it belongs to the current user.'),
-    ],
-    '#default_value' => $refresh_mode,
-  ];
-  $form['commerce_wishlist']['refresh_frequency'] = [
-    '#type' => 'textfield',
-    '#title' => t('Wishlist refresh frequency'),
-    '#description' => t('Wishlists will only be refreshed if more than the specified number of seconds have passed since they were last refreshed.'),
-    '#default_value' => $refresh_frequency,
-    '#required' => TRUE,
-    '#size' => 10,
-    '#field_suffix' => t('seconds'),
-  ];
-  $form['actions']['submit']['#submit'][] = 'commerce_wishlist_order_type_form_submit';
+  $form['actions']['submit']['#submit'][] = 'commerce_wishlist_product_variation_type_form_submit';
 }
 
 /**
- * Form submission handler for 'commerce_order_type_form'.
+ * Form submission handler for 'commerce_product_variation_type_form'.
  */
-function commerce_wishlist_order_type_form_submit($form, FormStateInterface $form_state) {
-  $settings = &$form_state->getValue('commerce_wishlist');
-  $order_type = $form_state->getFormObject()->getEntity();
-  $order_type->setThirdPartySetting('commerce_wishlist', 'refresh_mode', $settings['refresh_mode']);
-  $order_type->setThirdPartySetting('commerce_wishlist', 'refresh_frequency', $settings['refresh_frequency']);
-  $order_type->save();
+function commerce_wishlist_product_variation_type_form_submit($form, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_product\Entity\ProductVariationTypeInterface $commerce_product_variation_type */
+  $commerce_product_variation_type = $form_state->getFormObject()->getEntity();
+  $settings = $form_state->getValue('commerce_wishlist');
+  $commerce_product_variation_type->setThirdPartySetting('commerce_wishlist', 'wishlist_item_type', $settings['wishlist_item_type']);
+  $commerce_product_variation_type->save();
+}
+
+/**
+ * Implements hook_field_formatter_third_party_settings_form().
+ *
+ * Extends the add to cart formatter form with a show wishlist button.
+ */
+function commerce_wishlist_field_formatter_third_party_settings_form(FormatterInterface $plugin, FieldDefinitionInterface $field_definition, $view_mode, $form, FormStateInterface $form_state) {
+  $element = [];
+
+  if ($plugin->getPluginId() == 'commerce_add_to_cart') {
+    $element['show_wishlist'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Show wishlist button'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'show_wishlist'),
+    ];
+    $element['weight_wishlist'] = [
+      '#type' => 'number',
+      '#title' => t('Change the weight of the wishlist button.'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'weight_wishlist', 99),
+    ];
+    $element['label_wishlist'] = [
+      '#type' => 'textfield',
+      '#title' => t('Override the wishlist button label'),
+      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'label_wishlist'),
+    ];
+  }
+  return $element;
 }
 
 /**
@@ -201,55 +272,22 @@ function commerce_wishlist_order_type_form_submit($form, FormStateInterface $for
  * Shows in the add-to-cart summary whether or not the wishlist is enabled.
  */
 function commerce_wishlist_field_formatter_settings_summary_alter(&$summary, $context) {
-  // Append a message to the summary when foo_formatter has
-  // my_setting set to TRUE for the current view mode.
-  if ($context['formatter']->getPluginId() == 'commerce_add_to_cart') {
-    if ($context['formatter']->getThirdPartySetting('commerce_wishlist', 'show_wishlist')) {
+  /** @var \Drupal\Core\Field\FormatterInterface $formatter */
+  $formatter = $context['formatter'];
+  if ($formatter->getPluginId() == 'commerce_add_to_cart') {
+    if ($formatter->getThirdPartySetting('commerce_wishlist', 'show_wishlist')) {
       $summary[] = t('Wishlist enabled.');
-    } else {
+    }
+    else {
       $summary[] = t('Wishlist disabled.');
     }
   }
 }
 
 /**
- * Implements hook_field_formatter_third_party_settings_form().
- *
- * Extends the add to cart formatter form with a show wishlist button.
+ * Implements hook_form_BASE_FORM_ID_alter() for 'commerce_order_item_add_to_cart_form'.
  */
-function commerce_wishlist_field_formatter_third_party_settings_form($plugin, $field_definition, $view_mode, $form, $form_state) {
-  $element = array();
-
-  if ($plugin->getPluginId() == 'commerce_add_to_cart') {
-    $element['show_wishlist'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Show wishlist button'),
-      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'show_wishlist'),
-    );
-    $element['ajax_wishlist'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Display "Add to wishlist" as an ajax link'),
-      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'ajax_wishlist'),
-    );
-    $element['weight_wishlist'] = array(
-      '#type' => 'number',
-      '#title' => t('Change the weight of the wishlist button.'),
-      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'weight_wishlist'),
-    );
-    $element['label_wishlist'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Override the wishlist button label'),
-      '#default_value' => $plugin->getThirdPartySetting('commerce_wishlist', 'label_wishlist'),
-    );
-  }
-  return $element;
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function commerce_wishlist_form_commerce_order_item_add_to_cart_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-
+function commerce_wishlist_form_commerce_order_item_add_to_cart_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   // The product entity is thankfully available in the form storage.
   $form_data = $form_state->getStorage();
   /** @var \Drupal\commerce_product\Entity\ProductInterface $product */
@@ -257,25 +295,19 @@ function commerce_wishlist_form_commerce_order_item_add_to_cart_form_alter(&$for
 
   // Grab the view mode third party settings.
   $display = EntityViewDisplay::collectRenderDisplay($product, $form_data['view_mode']);
-  $settings = $display->get("content")['variations']['third_party_settings']['commerce_wishlist'];
+  $display_content = $display->get('content');
+  $settings = !empty($display_content['variations']['third_party_settings']['commerce_wishlist']) ? $display_content['variations']['third_party_settings']['commerce_wishlist'] : [];
 
   // Add the button
-  if ($settings['show_wishlist'] == 1) {
-    $label = ($settings['label_wishlist'] != "")? $settings['label_wishlist'] : t('Add to wishlist');
-    $weight = ($settings['weight_wishlist'] != "")?$settings['weight_wishlist']:99;
-    if ($settings['ajax_wishlist'] != 1) {
-      $form['actions']['wishlist'] = array(
-        '#type' => 'submit',
-        '#value' => $label,
-        '#weight' => $weight,
-        '#submit' => array('commerce_wishlist_add_to_wishlist_form_submit'),
-      );
-    } else {
-      $form['actions']['wishlist'] = array(
-        '#markup' => '<a href="" class="commerce-wishlist-ajax">' . $label . ' - Not Implemented Yet</a>',
-        '#weight' => $weight,
-      );
-    }
+  if (!empty($settings['show_wishlist'])) {
+    $label = $settings['label_wishlist'] ?: t('Add to wishlist');
+    $weight = ($settings['weight_wishlist'] != "") ? $settings['weight_wishlist'] : 99;
+    $form['actions']['wishlist'] = [
+      '#type' => 'submit',
+      '#value' => $label,
+      '#weight' => $weight,
+      '#submit' => ['commerce_wishlist_add_to_wishlist_form_submit'],
+    ];
   }
 }
 
@@ -285,9 +317,8 @@ function commerce_wishlist_form_commerce_order_item_add_to_cart_form_alter(&$for
  * Note that since we must fire this function off using a static form_alter call,
  * we have no choice but to bring in the services and objects that we need.
  * Normally we would create a class and use dependency injection to get at all
- * of this context. We are very open to a better way of implmenting this hijack
- * of the add to cart form. For now, it's a 1:1 copy from the core add to cart
- * form ::submitForm process.
+ * of this context. We are very open to a better way of implementing this hijack
+ * of the add to cart form.
  *
  * @param array $form
  * @param \Drupal\Core\Form\FormStateInterface $form_state
@@ -297,59 +328,32 @@ function commerce_wishlist_add_to_wishlist_form_submit($form, FormStateInterface
 
   // Grab all objects that we need.
   /** @var \Drupal\commerce_cart\Form\AddToCartForm $add_to_cart_form */
+  $add_to_cart_form = $form_state->getFormObject();
   /** @var \Drupal\commerce_order\Entity\OrderItem $order_item */
-  /** @var \Drupal\commerce\PurchasableEntityInterface $purchased_entity */
-  $add_to_cart_form  = $form_state->getFormObject();
-  $order_item         = $add_to_cart_form->buildEntity($form,$form_state);
-  $purchased_entity  = $order_item->getPurchasedEntity();
-
-  // Grab all the services we need.
-  /** @var \Drupal\commerce_order\Resolver\DefaultOrderTypeResolver $order_resolver */
-  /** @var \Drupal\commerce_store\StoreContext $store_context */
-  /** @var \Drupal\commerce_wishlist\WishlistProvider $wishlist_provider */
-  /** @var \Drupal\commerce_wishlist\WishlistManager $wishlist_manager */
-  $order_resolver    = \Drupal::service('commerce_order.default_order_type_resolver');
-  $store_context     = \Drupal::service('commerce_store.store_context');
+  $order_item = $add_to_cart_form->buildEntity($form, $form_state);
+  $purchasable_entity = $order_item->getPurchasedEntity();
+  /** @var \Drupal\commerce_wishlist\WishlistManagerInterface $wishlist_manager */
+  $wishlist_manager = \Drupal::service('commerce_wishlist.wishlist_manager');
+  /** @var \Drupal\commerce_wishlist\WishlistProviderInterface $wishlist_provider */
   $wishlist_provider = \Drupal::service('commerce_wishlist.wishlist_provider');
-  $wishlist_manager  = \Drupal::service('commerce_wishlist.wishlist_manager');
+  /** @var \Drupal\commerce_wishlist\Resolver\WishlistTypeResolverInterface $wishlist_type_resolver */
+  $wishlist_type_resolver = \Drupal::service('commerce_wishlist.chain_wishlist_type_resolver');
 
-  // Determine the order type to use.
-  $order_type = $order_resolver->resolve($order_item);
+  // Create the wishlist item.
+  $wishlist_item = $wishlist_manager->createWishlistItem($purchasable_entity, $order_item->getQuantity());
 
-  // Find a store to use.
-  $stores = $purchased_entity->getStores();
-  if (count($stores) === 1) {
-    $store = reset($stores);
-  }
-  else {
-    $store = $store_context->getStore();
-    if (!in_array($store, $stores)) {
-      // Indicates that the site listings are not filtered properly.
-      throw new \Exception("The given entity can't be purchased from the current store.");
-    }
-  }
+  // Determine the wishlist type to use.
+  $wishlist_type = $wishlist_type_resolver->resolve($wishlist_item);
 
   // Use existing or create a new wishlist.
-  $wishlist = $wishlist_provider->getWishlist($order_type, $store);
+  $wishlist = $wishlist_provider->getWishlist($wishlist_type);
   if (!$wishlist) {
-    $wishlist = $wishlist_provider->createWishlist($order_type, $store);
+    $wishlist = $wishlist_provider->createWishlist($wishlist_type);
   }
-  $wishlist_manager->addOrderItem($wishlist, $order_item, $form_state->get(['settings', 'combine']));
+  $wishlist_manager->addWishlistItem($wishlist, $wishlist_item, $form_state->get(['settings', 'combine']));
 
-  // Let people know about the outcome.
   drupal_set_message(t('@entity added to @wishlist-link.', [
-    '@entity' => $purchased_entity->label(),
+    '@entity' => $purchasable_entity->label(),
     '@wishlist-link' => Link::createFromRoute(t('your wishlist', [], ['context' => 'wishlist link']), 'commerce_wishlist.page')->toString(),
   ]));
-}
-
-/**
- * Implements hook_views_data_alter().
- */
-function commerce_wishlist_views_data_alter(array &$data) {
-  $data['commerce_order_item']['edit_wishlist_quantity']['field'] = [
-    'title' => t('Wishlist quantity text field'),
-    'help' => t('Adds a text field for editing the quantity.'),
-    'id' => 'commerce_order_item_edit_quantity_wishlist',
-  ];
 }

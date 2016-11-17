@@ -1,0 +1,8 @@
+langcode: en
+status: true
+label: Default
+id: default
+allowAnonymous: false
+allowMultiple: true
+allowPublic: true
+wishlistFormView: commerce_wishlist_form

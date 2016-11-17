@@ -1,16 +1,51 @@
-commerce_order.commerce_order_type.*.third_party.commerce_wishlist:
-  type: mapping
-  label: 'Wishlist settings'
+commerce_wishlist.commerce_wishlist_type.*:
+  type: config_entity
+  label: 'Wishlist type'
   mapping:
-    wishlist_form_view:
+    label:
+      type: label
+      label: 'Label'
+    id:
+      type: string
+      label: 'Machine-readable name'
+    allowAnonymous:
+      type: boolean
+      label: 'Allow anonymous wishlists'
+    allowMultiple:
+      type: boolean
+      label: 'Allow multiple wishlists'
+    allowPublic:
+      type: boolean
+      label: 'Allow public wishlists'
+    wishlistFormView:
       type: string
       label: 'Wishlist form view'
-    refresh_mode:
+
+commerce_wishlist.commerce_wishlist_item_type.*:
+  type: config_entity
+  label: 'Wishlist item type'
+  mapping:
+    label:
+      type: label
+      label: 'Label'
+    id:
       type: string
-      label: 'Wishlist refresh mode'
-    refresh_frequency:
-      type: integer
-      label: 'Wishlist refresh frequency'
+      label: 'Machine-readable name'
+    purchasableEntityType:
+      type: string
+      label: 'Purchasable entity type'
+    wishlistType:
+      type: string
+      label: 'Wishlist type'
+
+block.settings.commerce_wishlist:
+  type: block_settings
+  label: 'Wishlist block'
+  mapping:
+    dropdown:
+      type: boolean
+      label: 'Display wishlist contents in dropdown'
+
 commerce_product.commerce_product_type.*.third_party.commerce_wishlist:
   type: mapping
   label: 'Wishlist settings'
@@ -18,12 +53,17 @@ commerce_product.commerce_product_type.*.third_party.commerce_wishlist:
     show_wishlist:
       type: boolean
       label: 'Show wishlist button'
-    ajax_wishlist:
-      type: boolean
-      label: 'Render wishlist button as ajax link'
     weight_wishlist:
       type: integer
       label: 'Modify wishlist button sort order'
     label_wishlist:
       type: text
       label: 'Override the button label'
+
+commerce_product.commerce_product_variation_type.*.third_party.commerce_wishlist:
+  type: mapping
+  label: 'Wishlist settings'
+  mapping:
+    wishlist_item_type:
+      type: string
+      label: 'Wishlist item type'

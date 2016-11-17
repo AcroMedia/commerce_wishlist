@@ -1,12 +1,9 @@
 <?php
-/**
- * @file
- * Contains \Drupal\commerce_wishlist\Controller\WishlistController class.
- */
 
 namespace Drupal\commerce_wishlist\Controller;
 
 use Drupal\commerce_wishlist\WishlistProviderInterface;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -50,9 +47,12 @@ class WishlistController extends ControllerBase {
    */
   public function wishlistPage() {
     $build = [];
+    $cacheable_metadata = new CacheableMetadata();
+    $cacheable_metadata->addCacheContexts(['user', 'session']);
+
     $wishlists = $this->wishlistProvider->getWishlists();
     $wishlists = array_filter($wishlists, function ($wishlist) {
-      // Wishlists are orders and orders have all kinds of methods.
+      /** @var \Drupal\commerce_wishlist\Entity\WishlistInterface $wishlist */
       return $wishlist->hasItems();
     });
     if (!empty($wishlists)) {
@@ -66,6 +66,7 @@ class WishlistController extends ControllerBase {
           '#arguments' => [$wishlist_id],
           '#embed' => TRUE,
         ];
+        $cacheable_metadata->addCacheableDependency($wishlist);
       }
     }
     else {
@@ -75,6 +76,11 @@ class WishlistController extends ControllerBase {
         '#suffix' => '</div>',
       ];
     }
+    $build['#cache'] = [
+      'contexts' => $cacheable_metadata->getCacheContexts(),
+      'tags' => $cacheable_metadata->getCacheTags(),
+      'max-age' => $cacheable_metadata->getCacheMaxAge(),
+    ];
 
     return $build;
   }
@@ -82,23 +88,24 @@ class WishlistController extends ControllerBase {
   /**
    * Gets the wishlist views for each wishlist.
    *
-   * @param \Drupal\commerce_order\Entity\OrderInterface[] $wishlists
-   *   The wishlist orders.
+   * @param \Drupal\commerce_wishlist\Entity\WishlistInterface[] $wishlists
+   *   The wishlists.
    *
    * @return array
-   *   An array of view ids keyed by cart order ID.
+   *   An array of view ids keyed by wishlist ID.
    */
   protected function getWishlistViews(array $wishlists) {
-    $order_type_ids = array_map(function ($wishlist) {
+    $wishlist_type_ids = array_map(function ($wishlist) {
+      /** @var \Drupal\commerce_wishlist\Entity\WishlistInterface $wishlist */
       return $wishlist->bundle();
     }, $wishlists);
-    $order_type_storage = $this->entityTypeManager()->getStorage('commerce_order_type');
-    $order_types = $order_type_storage->loadMultiple(array_unique($order_type_ids));
+    $wishlist_type_storage = $this->entityTypeManager()->getStorage('commerce_wishlist_type');
+    $wishlist_types = $wishlist_type_storage->loadMultiple(array_unique($wishlist_type_ids));
     $wishlist_views = [];
-    foreach ($order_type_ids as $wishlist_id => $order_type_id) {
-      /** @var \Drupal\commerce_order\Entity\OrderTypeInterface $order_type */
-      $order_type = $order_types[$order_type_id];
-      $wishlist_views[$wishlist_id] = $order_type->getThirdPartySetting('commerce_wishlist', 'wishlist_form_view', 'commerce_wishlist_form');
+    foreach ($wishlist_type_ids as $wishlist_id => $wishlist_type_id) {
+      /** @var \Drupal\commerce_wishlist\Entity\WishlistTypeInterface $wishlist_type */
+      $wishlist_type = $wishlist_types[$wishlist_type_id];
+      $wishlist_views[$wishlist_id] = $wishlist_type->getWishlistFormView();
     }
 
     return $wishlist_views;

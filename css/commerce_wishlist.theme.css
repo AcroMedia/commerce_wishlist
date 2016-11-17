@@ -1,0 +1,32 @@
+/**
+ * @file
+ * Default theme implementation for Commerce Wishlist components
+ *
+ * Provides some sensible defaults when used with Bartik.
+ */
+
+.wishlist-block--contents {
+  width: 225px;
+  background: white;
+  color: black;
+}
+.wishlist-block--contents__inner {
+  padding: 10px;
+}
+.wishlist--wishlist-block .wishlist-block--contents a {
+  color: inherit;
+}
+.wishlist-block--summary,
+.wishlist-block--summary__icon img,
+.wishlist-block--summary__count {
+  vertical-align: middle;
+}
+
+.wishlist--wishlist-block li.wishlist-block--contents__item {
+  clear: both;
+  margin-bottom: 10px;
+  border-bottom: 1px #eaeaea solid;
+}
+.wishlist-block--contents__quantity {
+  float: left;
+}

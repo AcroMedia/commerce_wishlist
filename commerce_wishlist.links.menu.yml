@@ -1,0 +1,17 @@
+entity.commerce_wishlist.collection:
+  title: Wishlists
+  route_name: entity.commerce_wishlist.collection
+  parent: commerce.admin_commerce
+  description: 'Manage your wishlists.'
+
+entity.commerce_wishlist_type.collection:
+  title: Wishlist types
+  route_name: entity.commerce_wishlist_type.collection
+  parent: commerce.configuration
+  description: 'Manage your wishlist types.'
+
+entity.commerce_wishlist_item_type.collection:
+  title: Wishlist item types
+  route_name: entity.commerce_wishlist_item_type.collection
+  parent: commerce.configuration
+  description: 'Manage your wishlist item types.'

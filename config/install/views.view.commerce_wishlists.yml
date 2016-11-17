@@ -1,14 +1,10 @@
 langcode: en
 status: true
 dependencies:
-  enforced:
-    module:
-      - commerce_wishlist
   module:
     - commerce
-    - commerce_order
-    - commerce_price
-    - commerce_store
+    - commerce_wishlist
+    - options
     - system
     - user
 id: commerce_wishlists
@@ -16,8 +12,8 @@ label: Wishlists
 module: views
 description: ''
 tag: Commerce
-base_table: commerce_order
-base_field: order_id
+base_table: commerce_wishlist
+base_field: wishlist_id
 core: 8.x
 display:
   default:
@@ -29,7 +25,7 @@ display:
       access:
         type: perm
         options:
-          perm: 'administer orders'
+          perm: 'access commerce_wishlist overview'
       cache:
         type: none
         options: {  }
@@ -84,22 +80,27 @@ display:
           summary: ''
           description: ''
           columns:
+            name: name
+            created: created
             type: type
-            store_id: store_id
             uid: uid
-            mail: uid
-            total_price__amount: total_price__amount
-            changed: changed
             operations: operations
           info:
-            type:
+            name:
               sortable: true
               default_sort_order: asc
               align: ''
               separator: ''
-              empty_column: true
-              responsive: priority-medium
-            store_id:
+              empty_column: false
+              responsive: ''
+            created:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            type:
               sortable: true
               default_sort_order: asc
               align: ''
@@ -113,27 +114,6 @@ display:
               separator: '<br />'
               empty_column: false
               responsive: ''
-            mail:
-              sortable: false
-              default_sort_order: asc
-              align: ''
-              separator: ''
-              empty_column: false
-              responsive: ''
-            total_price__amount:
-              sortable: true
-              default_sort_order: asc
-              align: ''
-              separator: ''
-              empty_column: false
-              responsive: ''
-            changed:
-              sortable: true
-              default_sort_order: desc
-              align: ''
-              separator: ''
-              empty_column: true
-              responsive: ''
             operations:
               sortable: false
               default_sort_order: asc
@@ -141,15 +121,15 @@ display:
               separator: ''
               empty_column: false
               responsive: ''
-          default: changed
+          default: created
           empty_table: true
       row:
         type: fields
       fields:
-        commerce_order_bulk_form:
-          id: commerce_order_bulk_form
-          table: commerce_order
-          field: commerce_order_bulk_form
+        commerce_wishlist_bulk_form:
+          id: commerce_wishlist_bulk_form
+          table: commerce_wishlist
+          field: commerce_wishlist_bulk_form
           relationship: none
           group_type: group
           admin_label: ''
@@ -197,11 +177,143 @@ display:
           action_title: 'With selection'
           include_exclude: exclude
           selected_actions: {  }
-          entity_type: commerce_order
+          entity_type: commerce_wishlist
           plugin_id: bulk_form
+        name:
+          id: name
+          table: commerce_wishlist
+          field: name
+          relationship: none
+          group_type: group
+          admin_label: ''
+          label: 'Name'
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: true
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: string
+          settings:
+            link_to_entity: true
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+          entity_type: null
+          entity_field: name
+          plugin_id: field
+        created:
+          id: created
+          table: commerce_wishlist
+          field: created
+          relationship: none
+          group_type: group
+          admin_label: ''
+          label: Date
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: true
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: N/A
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: timestamp
+          settings:
+            date_format: short
+            custom_date_format: ''
+            timezone: ''
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+          entity_type: commerce_wishlist
+          entity_field: created
+          plugin_id: field
         type:
           id: type
-          table: commerce_order
+          table: commerce_wishlist
           field: type
           relationship: none
           group_type: group
@@ -262,78 +374,12 @@ display:
           separator: ', '
           field_api_classes: false
           hide_single_bundle: true
-          entity_type: commerce_order
+          entity_type: commerce_wishlist
           entity_field: type
           plugin_id: commerce_entity_bundle
-        store_id:
-          id: store_id
-          table: commerce_order
-          field: store_id
-          relationship: none
-          group_type: group
-          admin_label: ''
-          label: Store
-          exclude: false
-          alter:
-            alter_text: false
-            text: ''
-            make_link: false
-            path: ''
-            absolute: false
-            external: false
-            replace_spaces: false
-            path_case: none
-            trim_whitespace: false
-            alt: ''
-            rel: ''
-            link_class: ''
-            prefix: ''
-            suffix: ''
-            target: ''
-            nl2br: false
-            max_length: 0
-            word_boundary: true
-            ellipsis: true
-            more_link: false
-            more_link_text: ''
-            more_link_path: ''
-            strip_tags: false
-            trim: false
-            preserve_tags: ''
-            html: false
-          element_type: ''
-          element_class: ''
-          element_label_type: ''
-          element_label_class: ''
-          element_label_colon: true
-          element_wrapper_type: ''
-          element_wrapper_class: ''
-          element_default_classes: true
-          empty: ''
-          hide_empty: false
-          empty_zero: false
-          hide_alter_empty: true
-          click_sort_column: target_id
-          type: entity_reference_label
-          settings:
-            link: true
-          group_column: target_id
-          group_columns: {  }
-          group_rows: true
-          delta_limit: 0
-          delta_offset: 0
-          delta_reversed: false
-          delta_first_last: false
-          multi_type: separator
-          separator: ', '
-          field_api_classes: false
-          hide_single_store: true
-          entity_type: commerce_order
-          entity_field: store_id
-          plugin_id: commerce_store
         uid:
           id: uid
-          table: commerce_order
+          table: commerce_wishlist
           field: uid
           relationship: none
           group_type: group
@@ -393,207 +439,12 @@ display:
           multi_type: separator
           separator: ', '
           field_api_classes: false
-          entity_type: commerce_order
+          entity_type: commerce_wishlist
           entity_field: uid
-          plugin_id: field
-        mail:
-          id: mail
-          table: commerce_order
-          field: mail
-          relationship: none
-          group_type: group
-          admin_label: ''
-          label: Email
-          exclude: false
-          alter:
-            alter_text: false
-            text: ''
-            make_link: false
-            path: ''
-            absolute: false
-            external: false
-            replace_spaces: false
-            path_case: none
-            trim_whitespace: false
-            alt: ''
-            rel: ''
-            link_class: ''
-            prefix: ''
-            suffix: ''
-            target: ''
-            nl2br: false
-            max_length: 0
-            word_boundary: true
-            ellipsis: true
-            more_link: false
-            more_link_text: ''
-            more_link_path: ''
-            strip_tags: false
-            trim: false
-            preserve_tags: ''
-            html: false
-          element_type: ''
-          element_class: ''
-          element_label_type: ''
-          element_label_class: ''
-          element_label_colon: true
-          element_wrapper_type: ''
-          element_wrapper_class: ''
-          element_default_classes: true
-          empty: ''
-          hide_empty: false
-          empty_zero: false
-          hide_alter_empty: true
-          click_sort_column: value
-          type: basic_string
-          settings: {  }
-          group_column: value
-          group_columns: {  }
-          group_rows: true
-          delta_limit: 0
-          delta_offset: 0
-          delta_reversed: false
-          delta_first_last: false
-          multi_type: separator
-          separator: ', '
-          field_api_classes: false
-          entity_type: commerce_order
-          entity_field: mail
-          plugin_id: field
-        total_price__amount:
-          id: total_price__amount
-          table: commerce_order
-          field: total_price__amount
-          relationship: none
-          group_type: group
-          admin_label: ''
-          label: Total
-          exclude: false
-          alter:
-            alter_text: false
-            text: ''
-            make_link: false
-            path: ''
-            absolute: false
-            external: false
-            replace_spaces: false
-            path_case: none
-            trim_whitespace: false
-            alt: ''
-            rel: ''
-            link_class: ''
-            prefix: ''
-            suffix: ''
-            target: ''
-            nl2br: false
-            max_length: 0
-            word_boundary: true
-            ellipsis: true
-            more_link: false
-            more_link_text: ''
-            more_link_path: ''
-            strip_tags: false
-            trim: false
-            preserve_tags: ''
-            html: false
-          element_type: ''
-          element_class: ''
-          element_label_type: ''
-          element_label_class: ''
-          element_label_colon: true
-          element_wrapper_type: ''
-          element_wrapper_class: ''
-          element_default_classes: true
-          empty: ''
-          hide_empty: false
-          empty_zero: false
-          hide_alter_empty: true
-          click_sort_column: amount
-          type: commerce_price_default
-          settings:
-            strip_trailing_zeroes: false
-            display_currency_code: false
-          group_column: ''
-          group_columns: {  }
-          group_rows: true
-          delta_limit: 0
-          delta_offset: 0
-          delta_reversed: false
-          delta_first_last: false
-          multi_type: separator
-          separator: ', '
-          field_api_classes: false
-          entity_type: commerce_order
-          entity_field: total_price
-          plugin_id: field
-        changed:
-          id: changed
-          table: commerce_order
-          field: changed
-          relationship: none
-          group_type: group
-          admin_label: ''
-          label: Updated
-          exclude: false
-          alter:
-            alter_text: false
-            text: ''
-            make_link: false
-            path: ''
-            absolute: false
-            external: false
-            replace_spaces: false
-            path_case: none
-            trim_whitespace: false
-            alt: ''
-            rel: ''
-            link_class: ''
-            prefix: ''
-            suffix: ''
-            target: ''
-            nl2br: false
-            max_length: 0
-            word_boundary: true
-            ellipsis: true
-            more_link: false
-            more_link_text: ''
-            more_link_path: ''
-            strip_tags: false
-            trim: false
-            preserve_tags: ''
-            html: false
-          element_type: ''
-          element_class: ''
-          element_label_type: ''
-          element_label_class: ''
-          element_label_colon: true
-          element_wrapper_type: ''
-          element_wrapper_class: ''
-          element_default_classes: true
-          empty: ''
-          hide_empty: false
-          empty_zero: false
-          hide_alter_empty: true
-          click_sort_column: value
-          type: timestamp_ago
-          settings:
-            granularity: 2
-          group_column: value
-          group_columns: {  }
-          group_rows: true
-          delta_limit: 0
-          delta_offset: 0
-          delta_reversed: false
-          delta_first_last: false
-          multi_type: separator
-          separator: ', '
-          field_api_classes: false
-          entity_type: commerce_order
-          entity_field: changed
           plugin_id: field
         operations:
           id: operations
-          table: commerce_order
+          table: commerce_wishlist
           field: operations
           relationship: none
           group_type: group
@@ -640,32 +491,34 @@ display:
           empty_zero: false
           hide_alter_empty: true
           destination: true
-          entity_type: commerce_order
+          entity_type: commerce_wishlist
           plugin_id: entity_operations
       filters:
-        wishlist:
-          id: wishlist
-          table: commerce_order
-          field: wishlist
+        name:
+          id: name
+          table: commerce_wishlist
+          field: name
           relationship: none
           group_type: group
           admin_label: ''
-          operator: '='
-          value: true
+          operator: contains
+          value: ''
           group: 1
-          exposed: false
+          exposed: true
           expose:
-            operator_id: ''
-            label: ''
+            operator_id: name_op
+            label: 'Wishlist name'
             description: ''
             use_operator: false
-            operator: ''
-            identifier: ''
+            operator: name_op
+            identifier: name
             required: false
             remember: false
             multiple: false
             remember_roles:
               authenticated: authenticated
+              anonymous: '0'
+              administrator: '0'
           is_grouped: false
           group_info:
             label: ''
@@ -678,12 +531,12 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
-          entity_type: commerce_order
-          entity_field: wishlist
-          plugin_id: boolean
+          entity_type: commerce_wishlist
+          entity_field: name
+          plugin_id: string
         type:
           id: type
-          table: commerce_order
+          table: commerce_wishlist
           field: type
           relationship: none
           group_type: group
@@ -720,7 +573,7 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
-          entity_type: commerce_order
+          entity_type: commerce_wishlist
           entity_field: type
           plugin_id: commerce_entity_bundle
       sorts: {  }
@@ -737,16 +590,21 @@ display:
           admin_label: ''
           empty: true
           tokenize: false
-          content: 'No orders available.'
+          content: 'No wishlists available.'
           plugin_id: text_custom
       relationships: {  }
       arguments: {  }
       display_extenders: {  }
       use_ajax: false
+      filter_groups:
+        operator: AND
+        groups:
+          1: AND
     cache_metadata:
       contexts:
         - 'languages:language_content'
         - 'languages:language_interface'
+        - url
         - url.query_args
         - user.permissions
       cacheable: false
@@ -759,20 +617,26 @@ display:
     position: 1
     display_options:
       display_extenders: {  }
-      path: admin/commerce/orders/wishlists
+      path: admin/commerce/wishlists/list
       menu:
-        type: tab
+        type: 'default tab'
         title: Wishlists
         description: ''
         expanded: false
         parent: ''
-        weight: 0
+        weight: -10
         context: '0'
-        menu_name: admin
+        menu_name: main
+      tab_options:
+        type: normal
+        title: Wishlists
+        description: 'Manage your wishlists.'
+        weight: 0
     cache_metadata:
       contexts:
         - 'languages:language_content'
         - 'languages:language_interface'
+        - url
         - url.query_args
         - user.permissions
       cacheable: false

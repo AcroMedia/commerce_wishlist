@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - commerce_wishlist
+id: commerce_wishlist.user
+label: User
+targetEntityType: commerce_wishlist
+cache: true

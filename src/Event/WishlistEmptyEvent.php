@@ -2,7 +2,7 @@
 
 namespace Drupal\commerce_wishlist\Event;
 
-use Drupal\commerce_order\Entity\OrderInterface;
+use Drupal\commerce_wishlist\Entity\WishlistInterface;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
@@ -13,50 +13,50 @@ use Symfony\Component\EventDispatcher\Event;
 class WishlistEmptyEvent extends Event {
 
   /**
-   * The wishlist order.
+   * The wishlist entity.
    *
-   * @var \Drupal\commerce_order\Entity\OrderInterface
+   * @var \Drupal\commerce_wishlist\Entity\WishlistInterface
    */
   protected $wishlist;
 
   /**
-   * The removed order items.
+   * The removed wishlist items.
    *
-   * @var \Drupal\commerce_order\Entity\OrderItemInterface[]
+   * @var \Drupal\commerce_wishlist\Entity\WishlistItemInterface[]
    */
-  protected $orderItems;
+  protected $wishlistItems;
 
   /**
    * Constructs a new WishlistEmptyEvent.
    *
-   * @param \Drupal\commerce_order\Entity\OrderInterface $wishlist
-   *   The wishlist order.
-   * @param \Drupal\commerce_order\Entity\OrderItemInterface[] $order_items
-   *   The removed order items.
+   * @param \Drupal\commerce_wishlist\Entity\WishlistInterface $wishlist
+   *   The wishlist entity.
+   * @param \Drupal\commerce_wishlist\Entity\WishlistItemInterface[] $wishlist_items
+   *   The removed wishlist items.
    */
-  public function __construct(OrderInterface $wishlist, array $order_items) {
+  public function __construct(WishlistInterface $wishlist, array $wishlist_items) {
     $this->wishlist = $wishlist;
-    $this->orderItems = $order_items;
+    $this->wishlistItems = $wishlist_items;
   }
 
   /**
-   * Gets the wishlist order.
+   * Gets the wishlist entity.
    *
-   * @return \Drupal\commerce_order\Entity\OrderInterface
-   *   The wishlist order.
+   * @return \Drupal\commerce_wishlist\Entity\WishlistInterface
+   *   The wishlist entity.
    */
   public function getWishlist() {
     return $this->wishlist;
   }
 
   /**
-   * Gets the removed order items.
+   * Gets the removed wishlist items.
    *
-   * @return \Drupal\commerce_order\Entity\OrderItemInterface[]
-   *   The removed order items.
+   * @return \Drupal\commerce_wishlist\Entity\WishlistItemInterface[]
+   *   The removed wishlist items.
    */
   public function getItems() {
-    return $this->orderItems;
+    return $this->wishlistItems;
   }
 
 }

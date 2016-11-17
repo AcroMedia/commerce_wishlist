@@ -10,11 +10,10 @@ final class WishlistEvents {
   /**
    * Name of the event fired after assigning the anonymous wishlist to a user.
    *
-   * Fired before the wishlist order is saved.
+   * Fired before the wishlist is saved.
    *
-   * Use this event to implement logic such as canceling any existing wishlist
-   * orders the user might already have prior to the anonymous wishlist
-   * assignment.
+   * Use this event to implement logic such as canceling any existing wishlists
+   * the user might already have prior to the anonymous wishlist assignment.
    *
    * @Event
    *
@@ -23,9 +22,9 @@ final class WishlistEvents {
   const WISHLIST_ASSIGN = 'commerce_wishlist.wishlist.assign';
 
   /**
-   * Name of the event fired after emptying the wishlist order.
+   * Name of the event fired after emptying the wishlist.
    *
-   * Fired before the wishlist order is saved.
+   * Fired before the wishlist is saved.
    *
    * @Event
    *
@@ -36,7 +35,7 @@ final class WishlistEvents {
   /**
    * Name of the event fired after adding a purchasable entity to the wishlist.
    *
-   * Fired before the wishlist order is saved.
+   * Fired before the wishlist is saved.
    *
    * @Event
    *
@@ -45,38 +44,38 @@ final class WishlistEvents {
   const WISHLIST_ENTITY_ADD = 'commerce_wishlist.entity.add';
 
   /**
-   * Name of the event fired after updating a wishlist's order item.
+   * Name of the event fired after updating a wishlist's wishlist item.
    *
-   * Fired before the wishlist order is saved.
+   * Fired before the wishlist is saved.
    *
    * @Event
    *
-   * @see \Drupal\commerce_wishlist\Event\WishlistOrderItemUpdateEvent
+   * @see \Drupal\commerce_wishlist\Event\WishlistItemUpdateEvent
    */
-  const WISHLIST_ORDER_ITEM_UPDATE = 'commerce_wishlist.order_item.update';
+  const WISHLIST_ITEM_UPDATE = 'commerce_wishlist.wishlist_item.update';
 
   /**
-   * Name of the event fired after removing a order item from the wishlist.
+   * Name of the event fired after removing a wishlist item from the wishlist.
    *
-   * Fired before the wishlist order is saved.
+   * Fired before the wishlist is saved.
    *
    * @Event
    *
-   * @see \Drupal\commerce_wishlist\Event\WishlistOrderItemRemoveEvent
+   * @see \Drupal\commerce_wishlist\Event\WishlistItemRemoveEvent
    */
-  const WISHLIST_ORDER_ITEM_REMOVE = 'commerce_wishlist.order_item.remove';
+  const WISHLIST_ITEM_REMOVE = 'commerce_wishlist.wishlist_item.remove';
 
   /**
    * Name of the event fired when altering the list of comparison fields.
    *
    * Use this event to add additional field names to the list of fields used
-   * to determine whether a order item can be combined into an existing order
-   * item.
+   * to determine whether a wishlist item can be combined into an existing
+   * wishlist item.
    *
    * @Event
    *
-   * @see \Drupal\commerce_wishlist\Event\OrderItemComparisonFieldsEvent
+   * @see \Drupal\commerce_wishlist\Event\WishlistItemComparisonFieldsEvent
    */
-  const ORDER_ITEM_COMPARISON_FIELDS = 'commerce_wishlist.order_item.comparison_fields';
+  const WISHLIST_ITEM_COMPARISON_FIELDS = 'commerce_wishlist.wishlist_item.comparison_fields';
 
 }

@@ -30,23 +30,23 @@ class WishlistSession implements WishlistSessionInterface {
    * {@inheritdoc}
    */
   public function getWishlistIds() {
-    return $this->session->get('commerce_wishlist_orders', []);
+    return $this->session->get('commerce_wishlists', []);
   }
 
   /**
    * {@inheritdoc}
    */
   public function addWishlistId($wishlist_id) {
-    $ids = $this->session->get('commerce_wishlist_orders', []);
+    $ids = $this->session->get('commerce_wishlists', []);
     $ids[] = $wishlist_id;
-    $this->session->set('commerce_wishlist_orders', array_unique($ids));
+    $this->session->set('commerce_wishlists', array_unique($ids));
   }
 
   /**
    * {@inheritdoc}
    */
   public function hasWishlistId($wishlist_id) {
-    $ids = $this->session->get('commerce_wishlist_orders', []);
+    $ids = $this->session->get('commerce_wishlists', []);
     return in_array($wishlist_id, $ids);
   }
 
@@ -54,14 +54,14 @@ class WishlistSession implements WishlistSessionInterface {
    * {@inheritdoc}
    */
   public function deleteWishlistId($wishlist) {
-    $ids = $this->session->get('commerce_wishlist_orders', []);
+    $ids = $this->session->get('commerce_wishlists', []);
     $ids = array_diff($ids, [$wishlist]);
     if (!empty($ids)) {
-      $this->session->set('commerce_wishlist_orders', $ids);
+      $this->session->set('commerce_wishlists', $ids);
     }
     else {
       // Remove the empty list to allow the system to clean up empty sessions.
-      $this->session->remove('commerce_wishlist_orders');
+      $this->session->remove('commerce_wishlists');
     }
   }
 

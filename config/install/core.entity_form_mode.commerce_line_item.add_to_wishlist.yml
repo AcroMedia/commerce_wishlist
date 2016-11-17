@@ -1,12 +1,10 @@
 langcode: en
 status: true
 dependencies:
-  module:
-    - commerce_order
   enforced:
     module:
       - commerce_wishlist
-id: commerce_order_item.commerce_wishlist
+id: commerce_wishlist_item.add_to_wishlist
 label: 'Add to wishlist'
-targetEntityType: commerce_order_item
+targetEntityType: commerce_wishlist_item
 cache: true

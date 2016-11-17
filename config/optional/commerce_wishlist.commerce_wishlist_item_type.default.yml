@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - commerce_product
+  enforced:
+    module:
+      - commerce_wishlist
+label: 'Default'
+id: default
+purchasableEntityType: commerce_product_variation
+wishlistType: default
